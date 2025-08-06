@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # Main accommodation checker service
+  accommodation-checker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    image: accommodation-checker:latest
+    container_name: ryokan-checker
+    restart: unless-stopped
+    volumes:
+      - ./config.json:/app/config.json:ro
+    environment:
+      - CONFIG_PATH=/app/config.json
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - NOTIFICATION_ENDPOINT=${NOTIFICATION_ENDPOINT:-http://mock-notification/notify}
+    networks:
+      - checker-network
+    depends_on:
+      - mock-notification
+    healthcheck:
+      test: ["CMD", "python", "-c", "import asyncio; import sys; sys.path.insert(0, '/app/src'); from main import AccommodationChecker; from config import load_config; asyncio.run(AccommodationChecker(load_config('/app/config.json')).health_check())"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # External mock notification service
+  mock-notification:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.mock
+    container_name: mock-notification
+    ports:
+      - "8080:3000"
+    networks:
+      - checker-network
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+networks:
+  checker-network:
+    driver: bridge

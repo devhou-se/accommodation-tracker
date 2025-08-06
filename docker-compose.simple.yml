@@ -1,0 +1,51 @@
+services:
+  # External mock notification service
+  mock-notification:
+    build:
+      context: ./docker
+      dockerfile: Dockerfile.mock
+    container_name: mock-notification-simple
+    ports:
+      - "8082:3000"
+    networks:
+      - checker-network
+    environment:
+      - PORT=3000
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Simple Python service (using host Python installation)
+  accommodation-checker:
+    image: python:3.11-slim
+    container_name: ryokan-checker-simple
+    working_dir: /app
+    volumes:
+      - ./src:/app/src:ro
+      - ./config.test.json:/app/config.json:ro
+      - ./requirements.txt:/app/requirements.txt:ro
+      - ./quick_docker_test.py:/app/test.py:ro
+    networks:
+      - checker-network
+    depends_on:
+      mock-notification:
+        condition: service_healthy
+    environment:
+      - CONFIG_PATH=/app/config.json
+      - LOG_LEVEL=INFO
+      - PYTHONPATH=/app/src
+    command: >
+      bash -c "
+        apt-get update && 
+        apt-get install -y wget curl &&
+        pip install -r /app/requirements.txt &&
+        python -m playwright install chromium &&
+        python -m playwright install-deps &&
+        python /app/test.py
+      "
+
+networks:
+  checker-network:
+    driver: bridge

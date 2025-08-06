@@ -1,0 +1,1 @@
+# Japanese Accommodation Availability Checker
