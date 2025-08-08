@@ -11,9 +11,11 @@ This service specifically targets traditional Japanese accommodations (Gassho ho
 - **Automated Monitoring**: Continuous checking of accommodation availability
 - **Smart Detection**: Identifies available dates using visual calendar indicators
 - **HTTP Notifications**: Sends JSON alerts to configured endpoints
+- **Web Status Dashboard**: Beautiful real-time monitoring interface 📊
 - **Containerized**: Docker-ready for easy deployment
 - **Resilient**: Handles site changes gracefully with detailed logging
 - **Configurable**: JSON-based configuration with environment variable overrides
+- **Historical Tracking**: SQLite database stores all check results and discoveries
 
 ## Quick Start
 

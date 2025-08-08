@@ -1,13 +1,8 @@
 {
   "target_dates": ["2025-03-15", "2025-03-16", "2025-08-15"],
   "notification_endpoint": "http://mock-notification:8082/notify",
-  "sendgrid_api_key": "${SENDGRID_API_KEY}",
-  "notification_emails": [
-    "user@example.com"
-  ],
-  "email_from": "noreply@ryokan-checker.com",
   "log_level": "INFO",
-  "check_interval_seconds": 900,
+  "check_interval_seconds": 120,
   "retry_attempts": 3,
   "timeout_seconds": 30
 }

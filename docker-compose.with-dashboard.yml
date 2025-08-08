@@ -1,3 +1,5 @@
+version: '3.8'
+
 services:
   # Main accommodation checker service
   accommodation-checker:
@@ -10,7 +12,6 @@ services:
     environment:
       - CONFIG_PATH=/app/config.json
       - LOG_LEVEL=INFO
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     networks:
       - ryokan-network
     depends_on:
@@ -35,7 +36,6 @@ services:
     environment:
       - CONFIG_PATH=/app/config.json
       - LOG_LEVEL=INFO
-      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
     networks:
       - ryokan-network
     command: ["python", "/app/src/web/status_server.py"]

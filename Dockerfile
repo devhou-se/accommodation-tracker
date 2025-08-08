@@ -46,6 +46,8 @@ RUN apt-get update && apt-get install -y \
     libcairo-gobject2 \
     libgtk-3-0 \
     libgdk-pixbuf2.0-0 \
+    # Web interface dependencies
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
@@ -58,6 +60,9 @@ COPY --from=builder /root/.local /home/appuser/.local
 # Set up application directory
 WORKDIR /app
 
+# Create data directory for status tracking
+RUN mkdir -p /app/data
+
 # Copy application code
 COPY src/ ./src/
 COPY config.example.json ./
@@ -67,6 +72,7 @@ COPY --from=builder /root/.cache/ms-playwright /home/appuser/.cache/ms-playwrigh
 
 # Set ownership
 RUN chown -R appuser:appuser /app /home/appuser
+RUN chmod 755 /app/data
 
 # Switch to non-root user
 USER appuser
@@ -77,8 +83,8 @@ ENV PATH=/home/appuser/.local/bin:$PATH
 # Set Python path
 ENV PYTHONPATH=/app/src
 
-# Expose health check port (if needed)
-EXPOSE 8080
+# Expose ports
+EXPOSE 8000 8080
 
 # Health check
 HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \

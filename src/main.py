@@ -2,12 +2,14 @@ import asyncio
 import signal
 import sys
 import os
+import time
 from typing import Optional
 import structlog
 
 from config import load_config, Config
 from scrapers import ShirakawaScraper
 from notifications import NotificationClient
+from status_tracker import StatusTracker
 
 
 class AccommodationChecker:
@@ -18,6 +20,7 @@ class AccommodationChecker:
         self.running = True
         self.scraper = None
         self.notification_client = None
+        self.status_tracker = None
         self.logger = structlog.get_logger()
         
         # Configure structured logging
@@ -57,8 +60,13 @@ class AccommodationChecker:
         self.notification_client = NotificationClient(
             endpoint_url=str(self.config.notification_endpoint),
             timeout_seconds=self.config.timeout_seconds,
-            retry_attempts=self.config.retry_attempts
+            retry_attempts=self.config.retry_attempts,
+            config=self.config
         )
+        
+        # Initialize status tracker
+        self.status_tracker = StatusTracker(self.config)
+        await self.status_tracker.initialize()
         
         # Test notification endpoint
         self.logger.info("Testing notification endpoint")
@@ -104,6 +112,12 @@ class AccommodationChecker:
         """Perform a single availability check cycle."""
         self.logger.info("Starting availability check", target_dates=self.config.target_dates)
         
+        # Record check start
+        check_id = await self.status_tracker.record_check_start()
+        start_time = time.time()
+        error = None
+        results = []
+        
         try:
             # Check availability
             results = await self.scraper.check_availability(self.config.target_dates)
@@ -114,6 +128,13 @@ class AccommodationChecker:
                 # Send notifications
                 success_count = await self.notification_client.send_notifications(results)
                 
+                # Record notification success
+                for result in results:
+                    await self.status_tracker.record_notification_sent(
+                        result.accommodation_name, 
+                        success_count > 0
+                    )
+                
                 self.logger.info(
                     "Availability check completed",
                     total_results=len(results),
@@ -123,8 +144,15 @@ class AccommodationChecker:
                 self.logger.info("No availability found")
                 
         except Exception as e:
-            self.logger.error("Error during availability check", error=str(e))
+            error = str(e)
+            self.logger.error("Error during availability check", error=error)
             raise
+        finally:
+            # Record check completion
+            duration = time.time() - start_time
+            await self.status_tracker.record_check_complete(
+                check_id, results, duration, error
+            )
     
     async def cleanup(self):
         """Clean up resources."""

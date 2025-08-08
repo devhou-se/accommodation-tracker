@@ -1,5 +1,5 @@
-from typing import List
-from pydantic import BaseModel, field_validator, HttpUrl
+from typing import List, Optional
+from pydantic import BaseModel, field_validator, HttpUrl, EmailStr
 from datetime import datetime
 import re
 
@@ -7,6 +7,9 @@ import re
 class Config(BaseModel):
     target_dates: List[str]
     notification_endpoint: HttpUrl
+    sendgrid_api_key: Optional[str] = None
+    notification_emails: Optional[List[str]] = []
+    email_from: Optional[str] = "noreply@ryokan-checker.com"
     log_level: str = "INFO"
     check_interval_seconds: int = 300
     retry_attempts: int = 3
