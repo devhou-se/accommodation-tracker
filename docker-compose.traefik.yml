@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  accommodation-checker:
+    build: .
+    container_name: gassho-tracker
+    restart: always
+    environment:
+      - CONFIG_PATH=/app/config.json
+      - MAILGUN_API_KEY=${MAILGUN_API_KEY}
+      - MAILGUN_DOMAIN=${MAILGUN_DOMAIN}
+      - NOTIFICATION_EMAIL=${NOTIFICATION_EMAIL}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./data:/app/data
+    networks:
+      - internal
+
+  status-dashboard:
+    build: .
+    container_name: gassho-dashboard
+    restart: always
+    environment:
+      - CONFIG_PATH=/app/config.json
+      - DASHBOARD_ONLY=true
+      - PORT=8080
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./data:/app/data:ro
+    command: ["python", "src/web/status_server.py"]
+    networks:
+      - internal
+      - traefik
+    labels:
+      # Enable Traefik
+      - "traefik.enable=true"
+      
+      # Router configuration
+      - "traefik.http.routers.jpaccomm.rule=Host(`jpaccomm.baileys.dev`)"
+      - "traefik.http.routers.jpaccomm.entrypoints=websecure"
+      - "traefik.http.routers.jpaccomm.tls=true"
+      - "traefik.http.routers.jpaccomm.tls.certresolver=letsencrypt"
+      
+      # Service configuration
+      - "traefik.http.services.jpaccomm.loadbalancer.server.port=8080"
+      
+      # Security headers (optional but recommended)
+      - "traefik.http.middlewares.jpaccomm-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.jpaccomm-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.jpaccomm-headers.headers.stsPreload=true"
+      - "traefik.http.middlewares.jpaccomm-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.jpaccomm-headers.headers.browserXssFilter=true"
+      - "traefik.http.routers.jpaccomm.middlewares=jpaccomm-headers"
+
+networks:
+  traefik:
+    external: true
+  internal:
+    driver: bridge

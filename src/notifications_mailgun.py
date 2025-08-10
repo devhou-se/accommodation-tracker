@@ -4,14 +4,13 @@ import asyncio
 from typing import List, Optional
 import structlog
 import aiohttp
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail, To
+import requests
 
 from config import Config
 
 
 class NotificationClient:
-    """Client for sending availability notifications via SendGrid email."""
+    """Client for sending availability notifications via Mailgun email."""
     
     def __init__(self, endpoint_url: str, timeout_seconds: int = 30, retry_attempts: int = 3, config: Optional[Config] = None):
         self.endpoint_url = endpoint_url
@@ -20,20 +19,22 @@ class NotificationClient:
         self.config = config
         self.logger = structlog.get_logger()
         
-        # Initialize SendGrid client if API key is available
-        self.sendgrid_client = None
-        if config and hasattr(config, 'sendgrid_api_key') and config.sendgrid_api_key:
+        # Initialize Mailgun settings if available
+        self.mailgun_api_key = None
+        self.mailgun_domain = None
+        if config and hasattr(config, 'mailgun_api_key') and config.mailgun_api_key:
             # Replace environment variable placeholder with actual value
-            api_key = config.sendgrid_api_key
+            api_key = config.mailgun_api_key
             if api_key.startswith('${') and api_key.endswith('}'):
                 env_var = api_key[2:-1]  # Remove ${ and }
                 api_key = os.getenv(env_var)
             
-            if api_key:
-                self.sendgrid_client = SendGridAPIClient(api_key=api_key)
-                self.logger.info("SendGrid client initialized")
+            if api_key and hasattr(config, 'mailgun_domain') and config.mailgun_domain:
+                self.mailgun_api_key = api_key
+                self.mailgun_domain = config.mailgun_domain
+                self.logger.info("Mailgun client initialized")
             else:
-                self.logger.warning("SendGrid API key not found in environment")
+                self.logger.warning("Mailgun API key or domain not found")
     
     async def send_notifications(self, results: List) -> int:
         """Send notifications for availability results."""
@@ -42,8 +43,8 @@ class NotificationClient:
         
         success_count = 0
         
-        # Try SendGrid email notifications first
-        if self.sendgrid_client and self.config and hasattr(self.config, 'notification_emails'):
+        # Try Mailgun email notifications first
+        if self.mailgun_api_key and self.mailgun_domain and self.config and hasattr(self.config, 'notification_emails'):
             try:
                 await self._send_email_notifications(results)
                 success_count += len(self.config.notification_emails)
@@ -62,12 +63,12 @@ class NotificationClient:
         return success_count
     
     async def _send_email_notifications(self, results: List):
-        """Send email notifications via SendGrid."""
+        """Send email notifications via Mailgun."""
         if not self.config or not hasattr(self.config, 'notification_emails'):
             return
         
         # Build email content
-        subject = f"🏯 Ryokan Availability Found - {len(results)} accommodation(s) available!"
+        subject = f"🏯 Gassho-zukuri Availability Found - {len(results)} accommodation(s) available!"
         
         # Create HTML content
         html_content = self._build_email_html(results)
@@ -76,16 +77,27 @@ class NotificationClient:
         # Send to all configured email addresses
         for email in self.config.notification_emails:
             try:
-                message = Mail(
-                    from_email=self.config.email_from,
-                    to_emails=To(email),
-                    subject=subject,
-                    html_content=html_content,
-                    plain_text_content=text_content
+                # Mailgun API endpoint
+                url = f"https://api.mailgun.net/v3/{self.mailgun_domain}/messages"
+                
+                # Send email via Mailgun
+                response = requests.post(
+                    url,
+                    auth=("api", self.mailgun_api_key),
+                    data={
+                        "from": self.config.email_from,
+                        "to": email,
+                        "subject": subject,
+                        "html": html_content,
+                        "text": text_content
+                    }
                 )
                 
-                response = self.sendgrid_client.send(message)
-                self.logger.info("Email sent", email=email, status_code=response.status_code)
+                if response.status_code == 200:
+                    self.logger.info("Email sent", email=email, status_code=response.status_code)
+                else:
+                    self.logger.error("Failed to send email", email=email, status_code=response.status_code, response=response.text)
+                    raise Exception(f"Mailgun API error: {response.status_code}")
                 
             except Exception as e:
                 self.logger.error("Failed to send email", email=email, error=str(e))
@@ -99,7 +111,7 @@ class NotificationClient:
                 {
                     "accommodation": result.accommodation_name,
                     "dates": result.available_dates,
-                    "url": result.url
+                    "url": getattr(result, 'url', getattr(result, 'link', ''))
                 }
                 for result in results
             ]
@@ -127,7 +139,7 @@ class NotificationClient:
         <html>
         <head>
             <style>
-                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
+                body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f5f5f5; }
                 .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
                 .header { background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%); color: white; padding: 30px 20px; text-align: center; }
                 .header h1 { margin: 0; font-size: 28px; }
@@ -145,7 +157,7 @@ class NotificationClient:
         <body>
             <div class="container">
                 <div class="header">
-                    <h1>🏯 Ryokan Availability Alert</h1>
+                    <h1>🏯 Gassho-zukuri Availability Alert</h1>
                     <p>New accommodation availability found in Shirakawa-go</p>
                 </div>
                 <div class="content">
@@ -165,18 +177,18 @@ class NotificationClient:
             html += f"""
                         </div>
                         <div class="link">
-                            <a href="{result.url}" target="_blank">View Accommodation →</a>
+                            <a href="{getattr(result, 'url', getattr(result, 'link', ''))}" target="_blank">View Accommodation →</a>
                         </div>
                     </div>
             """
         
         html += """
                     <p style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; color: #666;">
-                        This is an automated notification from your Ryokan Availability Checker.
+                        This is an automated notification from your Gassho-zukuri Availability Checker.
                     </p>
                 </div>
                 <div class="footer">
-                    <p>🏯 Ryokan Tracker Dashboard</p>
+                    <p>🏯 Gassho-zukuri Tracker Dashboard</p>
                     <p>Monitoring Shirakawa-go accommodation availability</p>
                 </div>
             </div>
@@ -188,31 +200,33 @@ class NotificationClient:
     
     def _build_email_text(self, results: List) -> str:
         """Build plain text email content."""
-        text = f"🏯 Ryokan Availability Alert\n\n"
+        text = f"🏯 Gassho-zukuri Availability Alert\n\n"
         text += f"Great news! We found {len(results)} accommodation(s) with availability:\n\n"
         
         for i, result in enumerate(results, 1):
             text += f"{i}. {result.accommodation_name}\n"
             text += f"   Available dates: {', '.join(result.available_dates)}\n"
-            text += f"   URL: {result.url}\n\n"
+            text += f"   URL: {getattr(result, 'url', getattr(result, 'link', ''))}\n\n"
         
-        text += "This is an automated notification from your Ryokan Availability Checker."
+        text += "This is an automated notification from your Gassho-zukuri Availability Checker."
         
         return text
     
     async def test_endpoint(self) -> bool:
         """Test if notification endpoints are working."""
-        # Test SendGrid if configured
-        if self.sendgrid_client:
+        # Test Mailgun if configured
+        if self.mailgun_api_key and self.mailgun_domain:
             try:
-                # Just test if the client is properly initialized
-                self.logger.info("SendGrid client is ready")
-                sendgrid_ready = True
+                # Test Mailgun API with a GET request to the domain
+                url = f"https://api.mailgun.net/v3/{self.mailgun_domain}"
+                response = requests.get(url, auth=("api", self.mailgun_api_key))
+                mailgun_ready = response.status_code == 200
+                self.logger.info("Mailgun client test", ready=mailgun_ready, status_code=response.status_code)
             except Exception as e:
-                self.logger.error("SendGrid client test failed", error=str(e))
-                sendgrid_ready = False
+                self.logger.error("Mailgun client test failed", error=str(e))
+                mailgun_ready = False
         else:
-            sendgrid_ready = False
+            mailgun_ready = False
         
         # Test HTTP endpoint
         try:
@@ -225,4 +239,4 @@ class NotificationClient:
             self.logger.error("HTTP endpoint test failed", error=str(e))
             http_ready = False
         
-        return sendgrid_ready or http_ready
+        return mailgun_ready or http_ready

@@ -27,7 +27,7 @@ from status_tracker import StatusTracker
 # Japan timezone
 JST = pytz.timezone('Asia/Tokyo')
 
-app = FastAPI(title="Ryokan Status Dashboard", description="📊 Real-time accommodation tracking status")
+app = FastAPI(title="Gassho-zukuri Status Dashboard", description="📊 Real-time accommodation tracking status")
 
 # Setup static files and templates
 static_dir = Path(__file__).parent / "static"
@@ -67,7 +67,7 @@ async def dashboard(request: Request):
     
     context = {
         "request": request,
-        "page_title": "🏯 Ryokan Tracker Dashboard",
+        "page_title": "🏯 Gassho-zukuri Tracker Dashboard",
         "current_time": current_jst.strftime("%Y-%m-%d %H:%M:%S JST"),
     }
     
@@ -230,7 +230,7 @@ async def get_config():
 
 def main():
     """Run the status server"""
-    print("🌸 Starting Ryokan Status Dashboard...")
+    print("🌸 Starting Gassho-zukuri Status Dashboard...")
     print("📊 Dashboard will be available at: http://localhost:8000")
     
     uvicorn.run(

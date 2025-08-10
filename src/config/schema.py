@@ -7,9 +7,10 @@ import re
 class Config(BaseModel):
     target_dates: List[str]
     notification_endpoint: HttpUrl
-    sendgrid_api_key: Optional[str] = None
+    mailgun_api_key: Optional[str] = None
+    mailgun_domain: Optional[str] = None
     notification_emails: Optional[List[str]] = []
-    email_from: Optional[str] = "noreply@ryokan-checker.com"
+    email_from: Optional[str] = "noreply@gassho-zukuri-checker.com"
     log_level: str = "INFO"
     check_interval_seconds: int = 300
     retry_attempts: int = 3

@@ -4,7 +4,7 @@ services:
   # Main accommodation checker service
   accommodation-checker:
     build: .
-    container_name: ryokan-checker-main
+    container_name: gassho-zukuri-checker-main
     restart: unless-stopped
     volumes:
       - ./config.json:/app/config.json:ro
@@ -13,7 +13,7 @@ services:
       - CONFIG_PATH=/app/config.json
       - LOG_LEVEL=INFO
     networks:
-      - ryokan-network
+      - gassho-zukuri-network
     depends_on:
       - mock-notification
     healthcheck:
@@ -26,7 +26,7 @@ services:
   # Status dashboard web interface  
   status-dashboard:
     build: .
-    container_name: ryokan-dashboard
+    container_name: gassho-zukuri-dashboard
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -37,7 +37,8 @@ services:
       - CONFIG_PATH=/app/config.json
       - LOG_LEVEL=INFO
     networks:
-      - ryokan-network
+      - gassho-zukuri-network
+      - traefik
     command: ["python", "/app/src/web/status_server.py"]
     depends_on:
       - accommodation-checker
@@ -47,18 +48,37 @@ services:
       timeout: 10s
       retries: 3
       start_period: 30s
+    labels:
+      # Traefik configuration
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      
+      # Router
+      - "traefik.http.routers.jpaccomm.rule=Host(`jpaccomm.baileys.dev`)"
+      - "traefik.http.routers.jpaccomm.entrypoints=websecure"
+      - "traefik.http.routers.jpaccomm.tls=true"
+      - "traefik.http.routers.jpaccomm.tls.certresolver=letsencrypt"
+      
+      # Service
+      - "traefik.http.services.jpaccomm.loadbalancer.server.port=8000"
+      
+      # Optional: HTTP to HTTPS redirect
+      - "traefik.http.routers.jpaccomm-http.rule=Host(`jpaccomm.baileys.dev`)"
+      - "traefik.http.routers.jpaccomm-http.entrypoints=web"
+      - "traefik.http.routers.jpaccomm-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
 
   # Mock notification service for testing
   mock-notification:
     build: 
       context: ./docker
       dockerfile: Dockerfile.mock
-    container_name: ryokan-mock-notify
+    container_name: gassho-zukuri-mock-notify
     restart: unless-stopped
     ports:
       - "8082:8082"
     networks:
-      - ryokan-network
+      - gassho-zukuri-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
       interval: 30s
@@ -71,8 +91,10 @@ volumes:
     driver: local
 
 networks:
-  ryokan-network:
+  gassho-zukuri-network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.21.0.0/16
+  traefik:
+    external: true

@@ -224,7 +224,7 @@ formatted_date = f"{year}-{month.zfill(2)}-{day.zfill(2)}"
 await asyncio.sleep(2)  # 2 seconds between accommodations
 
 # Respectful user agent
-headers = {'User-Agent': 'Ryokan-Checker/1.0'}
+headers = {'User-Agent': 'Gassho-zukuri-Checker/1.0'}
 
 # Timeout handling
 timeout = 30000  # 30 seconds

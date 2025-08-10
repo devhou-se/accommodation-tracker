@@ -13,7 +13,7 @@ Get the Japanese Accommodation Availability Checker running in under 5 minutes.
 
 ```bash
 git clone <repository-url>
-cd ryokan-checker
+cd gassho-zukuri-checker
 cp config.example.json config.json
 ```
 

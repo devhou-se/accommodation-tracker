@@ -26,7 +26,7 @@ logger = structlog.get_logger(__name__)
 class StatusTracker:
     """Tracks system status, availability history, and performance metrics"""
     
-    def __init__(self, config: Config, db_path: str = "/app/data/status.db"):
+    def __init__(self, config: Config, db_path: str = "data/status.db"):
         self.config = config
         self.db_path = Path(db_path)
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -433,7 +433,7 @@ class StatusTracker:
             from scrapers.base import AccommodationResult
             
             test_result = AccommodationResult(
-                accommodation_name="🏯 Test Ryokan",
+                accommodation_name="🏯 Test Gassho-zukuri",
                 available_dates=["2025-12-25"],
                 link="https://example.com/test",
                 location="Test Location, Shirakawa-go",
@@ -443,7 +443,7 @@ class StatusTracker:
             client = NotificationClient(str(self.config.notification_endpoint))
             success = await client.send_notification(test_result)
             
-            await self.record_notification_sent("Test Ryokan", success)
+            await self.record_notification_sent("Test Gassho-zukuri", success)
             
             return {
                 "success": success,

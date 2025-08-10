@@ -21,7 +21,7 @@ The status dashboard provides a comprehensive, Japanese-inspired web interface f
 ### Availability Tracking  
 - **Historical Data**: SQLite database stores all check results and discoveries
 - **Discovery Timeline**: When and where availability was found
-- **Accommodation Status**: Current state of all tracked ryokans
+- **Accommodation Status**: Current state of all tracked gassho-zukuris
 - **Notification Tracking**: Whether alerts were sent successfully
 
 ### Interactive Controls
@@ -82,7 +82,7 @@ The dashboard uses the same `config.json` as the main service:
 
 ### Quick Stats Cards
 - **Checks Today**: Number of accommodation checks performed
-- **Accommodations**: Total ryokans being monitored  
+- **Accommodations**: Total gassho-zukuris being monitored  
 - **Availabilities**: Discoveries found today
 - **Uptime**: How long the service has been running
 
@@ -103,7 +103,7 @@ The dashboard uses the same `config.json` as the main service:
 - Error messages when applicable
 
 #### 🏘️ Tracked Accommodations
-- Grid view of all monitored ryokans
+- Grid view of all monitored gassho-zukuris
 - Availability status for each property
 - Recent available dates found
 - Last seen timestamps

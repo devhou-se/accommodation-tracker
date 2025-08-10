@@ -1,9 +1,9 @@
 /**
- * Interactive dashboard JavaScript for the Ryokan Tracker
+ * Interactive dashboard JavaScript for the Gassho-zukuri Tracker
  * Handles real-time updates, charts, and user interactions
  */
 
-class RyokanDashboard {
+class Gassho-zukuriDashboard {
     constructor() {
         this.charts = {};
         this.refreshInterval = 30000; // 30 seconds
@@ -574,5 +574,5 @@ class RyokanDashboard {
 
 // Initialize dashboard when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new RyokanDashboard();
+    new Gassho-zukuriDashboard();
 });

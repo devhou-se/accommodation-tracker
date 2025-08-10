@@ -50,7 +50,7 @@ Create production configuration file:
 
 ```bash
 # /etc/environment or systemd service file
-CONFIG_PATH=/opt/ryokan-checker/config.json
+CONFIG_PATH=/opt/gassho-zukuri-checker/config.json
 LOG_LEVEL=INFO
 NOTIFICATION_ENDPOINT=https://api.yourservice.com/webhook
 ```
@@ -64,7 +64,7 @@ services:
   accommodation-checker:
     build: .
     image: accommodation-checker:1.0.0
-    container_name: ryokan-checker-prod
+    container_name: gassho-zukuri-checker-prod
     restart: unless-stopped
     
     # Security
@@ -87,8 +87,8 @@ services:
     
     # Configuration
     volumes:
-      - /opt/ryokan-checker/config.json:/app/config.json:ro
-      - /opt/ryokan-checker/logs:/app/logs
+      - /opt/gassho-zukuri-checker/config.json:/app/config.json:ro
+      - /opt/gassho-zukuri-checker/logs:/app/logs
       - /tmp:/tmp
     
     environment:
@@ -128,10 +128,10 @@ networks:
 
 ```bash
 # Create application directory
-sudo mkdir -p /opt/ryokan-checker/{config,logs}
+sudo mkdir -p /opt/gassho-zukuri-checker/{config,logs}
 
 # Set ownership
-sudo chown -R 1000:1000 /opt/ryokan-checker
+sudo chown -R 1000:1000 /opt/gassho-zukuri-checker
 
 # Install Docker
 curl -fsSL https://get.docker.com | sh
@@ -147,12 +147,12 @@ sudo chmod +x /usr/local/bin/docker-compose
 ```bash
 # Clone repository
 cd /opt
-sudo git clone https://github.com/yourorg/ryokan-checker.git
-cd ryokan-checker
+sudo git clone https://github.com/yourorg/gassho-zukuri-checker.git
+cd gassho-zukuri-checker
 
 # Copy production config
-sudo cp config.example.json /opt/ryokan-checker/config/config.json
-sudo nano /opt/ryokan-checker/config/config.json  # Edit with production values
+sudo cp config.example.json /opt/gassho-zukuri-checker/config/config.json
+sudo nano /opt/gassho-zukuri-checker/config/config.json  # Edit with production values
 
 # Build and deploy
 sudo docker compose -f docker-compose.prod.yml build
@@ -170,7 +170,7 @@ sudo docker compose -f docker-compose.prod.yml logs --tail=50
 curl -f http://localhost:8080/health
 
 # Verify logs
-sudo docker logs ryokan-checker-prod | tail -20
+sudo docker logs gassho-zukuri-checker-prod | tail -20
 
 # Test notification endpoint
 sudo docker compose exec accommodation-checker python -c "
@@ -326,14 +326,14 @@ sudo ufw enable
 services:
   accommodation-checker-1:
     <<: *accommodation-checker-base
-    container_name: ryokan-checker-1
+    container_name: gassho-zukuri-checker-1
     environment:
       - INSTANCE_ID=1
       - CHECK_INTERVAL_OFFSET=0
   
   accommodation-checker-2:
     <<: *accommodation-checker-base
-    container_name: ryokan-checker-2
+    container_name: gassho-zukuri-checker-2
     environment:
       - INSTANCE_ID=2
       - CHECK_INTERVAL_OFFSET=150  # 2.5 minute offset
@@ -364,18 +364,18 @@ server {
 
 ```bash
 #!/bin/bash
-# /etc/cron.daily/ryokan-checker-backup
+# /etc/cron.daily/gassho-zukuri-checker-backup
 
-BACKUP_DIR="/opt/backups/ryokan-checker"
+BACKUP_DIR="/opt/backups/gassho-zukuri-checker"
 DATE=$(date +%Y%m%d_%H%M%S)
 
 mkdir -p $BACKUP_DIR
 
 # Backup configuration
-cp /opt/ryokan-checker/config/config.json $BACKUP_DIR/config_$DATE.json
+cp /opt/gassho-zukuri-checker/config/config.json $BACKUP_DIR/config_$DATE.json
 
 # Backup logs (last 7 days)
-docker logs ryokan-checker-prod --since="168h" > $BACKUP_DIR/logs_$DATE.txt
+docker logs gassho-zukuri-checker-prod --since="168h" > $BACKUP_DIR/logs_$DATE.txt
 
 # Cleanup old backups (keep 30 days)
 find $BACKUP_DIR -name "*.json" -mtime +30 -delete
@@ -387,10 +387,10 @@ find $BACKUP_DIR -name "*.txt" -mtime +30 -delete
 ```bash
 # Full system restore procedure
 # 1. Restore configuration
-cp /opt/backups/ryokan-checker/config_latest.json /opt/ryokan-checker/config/config.json
+cp /opt/backups/gassho-zukuri-checker/config_latest.json /opt/gassho-zukuri-checker/config/config.json
 
 # 2. Rebuild service
-cd /opt/ryokan-checker
+cd /opt/gassho-zukuri-checker
 docker compose -f docker-compose.prod.yml build --no-cache
 docker compose -f docker-compose.prod.yml up -d
 
@@ -437,10 +437,10 @@ services:
 
 ```bash
 #!/bin/bash
-# /etc/cron.weekly/ryokan-checker-maintenance
+# /etc/cron.weekly/gassho-zukuri-checker-maintenance
 
 # Update application
-cd /opt/ryokan-checker
+cd /opt/gassho-zukuri-checker
 git pull origin main
 
 # Rebuild if changes
@@ -453,23 +453,23 @@ fi
 docker image prune -f
 
 # Rotate logs manually if needed
-docker logs ryokan-checker-prod --since="24h" > /opt/ryokan-checker/logs/app-$(date +%Y%m%d).log
+docker logs gassho-zukuri-checker-prod --since="24h" > /opt/gassho-zukuri-checker/logs/app-$(date +%Y%m%d).log
 ```
 
 ### Health Monitoring
 
 ```bash
 #!/bin/bash
-# /etc/cron.hourly/ryokan-checker-health
+# /etc/cron.hourly/gassho-zukuri-checker-health
 
 HEALTH_URL="http://localhost:8080/health"
 ALERT_EMAIL="admin@company.com"
 
 if ! curl -f -s $HEALTH_URL > /dev/null; then
-    echo "Health check failed at $(date)" | mail -s "Ryokan Checker Alert" $ALERT_EMAIL
+    echo "Health check failed at $(date)" | mail -s "Gassho-zukuri Checker Alert" $ALERT_EMAIL
     
     # Attempt restart
-    cd /opt/ryokan-checker
+    cd /opt/gassho-zukuri-checker
     docker compose -f docker-compose.prod.yml restart
 fi
 ```
@@ -500,11 +500,11 @@ services:
 
 ```bash
 # Restrict access to production config
-sudo chown root:docker /opt/ryokan-checker/config/config.json
-sudo chmod 640 /opt/ryokan-checker/config/config.json
+sudo chown root:docker /opt/gassho-zukuri-checker/config/config.json
+sudo chmod 640 /opt/gassho-zukuri-checker/config/config.json
 
 # Log access
-sudo auditctl -w /opt/ryokan-checker/config/config.json -p wa -k config-access
+sudo auditctl -w /opt/gassho-zukuri-checker/config/config.json -p wa -k config-access
 ```
 
 This production deployment guide ensures a secure, scalable, and maintainable deployment of the accommodation checker service.

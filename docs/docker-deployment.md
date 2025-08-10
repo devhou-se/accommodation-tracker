@@ -7,7 +7,7 @@ Complete guide for deploying the Japanese Accommodation Availability Checker usi
 ```bash
 # Clone repository
 git clone <repository-url>
-cd ryokan-checker
+cd gassho-zukuri-checker
 
 # Configure
 cp config.example.json config.json
@@ -25,7 +25,7 @@ docker compose up -d
 services:
   accommodation-checker:
     build: .
-    container_name: ryokan-checker
+    container_name: gassho-zukuri-checker
     restart: unless-stopped
     volumes:
       - ./config.json:/app/config.json:ro
@@ -124,7 +124,7 @@ Built-in health check verifies service status:
 docker compose ps
 
 # View health check logs
-docker inspect ryokan-checker --format='{{.State.Health.Status}}'
+docker inspect gassho-zukuri-checker --format='{{.State.Health.Status}}'
 ```
 
 ### Custom Health Check

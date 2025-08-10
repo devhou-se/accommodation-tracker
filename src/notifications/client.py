@@ -123,7 +123,7 @@ class NotificationClient:
                     json=payload,
                     headers={
                         'Content-Type': 'application/json',
-                        'User-Agent': 'Ryokan-Checker/1.0'
+                        'User-Agent': 'Gassho-zukuri-Checker/1.0'
                     }
                 ) as response:
                     if response.status == 200:

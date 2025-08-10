@@ -20,7 +20,7 @@ services:
   # Simple Python service (using host Python installation)
   accommodation-checker:
     image: python:3.11-slim
-    container_name: ryokan-checker-simple
+    container_name: gassho-zukuri-checker-simple
     working_dir: /app
     volumes:
       - ./src:/app/src:ro

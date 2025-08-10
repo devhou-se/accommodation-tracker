@@ -8,7 +8,7 @@ import structlog
 
 from config import load_config, Config
 from scrapers import ShirakawaScraper
-from notifications import NotificationClient
+from notifications_mailgun import NotificationClient
 from status_tracker import StatusTracker
 
 

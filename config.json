@@ -1,13 +1,10 @@
 {
-  "target_dates": ["2025-03-15", "2025-03-16", "2025-08-15"],
-  "notification_endpoint": "http://mock-notification:8082/notify",
-  "sendgrid_api_key": "${SENDGRID_API_KEY}",
-  "notification_emails": [
-    "user@example.com"
-  ],
-  "email_from": "noreply@ryokan-checker.com",
+  "target_dates": ["2025-08-27", "2025-08-28", "2025-08-29"],
+  "notification_endpoint": "https://httpbin.org/post",
+  "mailgun_api_key": "${MAILGUN_API_KEY}",
+  "mailgun_domain": "${MAILGUN_DOMAIN}",
+  "notification_emails": ["${NOTIFICATION_EMAIL}"],
+  "email_from": "Gassho-zukuri Checker <noreply@${MAILGUN_DOMAIN}>",
   "log_level": "INFO",
-  "check_interval_seconds": 900,
-  "retry_attempts": 3,
-  "timeout_seconds": 30
+  "check_interval_seconds": 300
 }

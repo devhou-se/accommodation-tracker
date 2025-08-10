@@ -248,7 +248,7 @@ async def main():
 ```json
 POST /notify HTTP/1.1
 Content-Type: application/json
-User-Agent: Ryokan-Checker/1.0
+User-Agent: Gassho-zukuri-Checker/1.0
 
 {
   "accommodation_name": "Rihee",

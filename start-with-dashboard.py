@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Quick start script for the Ryokan Checker with Status Dashboard
+Quick start script for the Gassho-zukuri Checker with Status Dashboard
 """
 import asyncio
 import subprocess
@@ -13,7 +13,7 @@ from pathlib import Path
 def print_banner():
     print("""
 🏯  ====================================  🏯
-    RYOKAN ACCOMMODATION TRACKER
+    GASSHO-ZUKURI ACCOMMODATION TRACKER
          WITH STATUS DASHBOARD
 🏯  ====================================  🏯
 

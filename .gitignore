@@ -1,0 +1,30 @@
+# Environment variables
+.env
+.env.*
+
+# Local data
+data/
+*.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Logs
+*.log
+
+# Docker volumes
+accommodation-data/
