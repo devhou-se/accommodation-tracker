@@ -346,10 +346,25 @@
             white-space: nowrap;
         }
         
-        .venue-name {
+        .venue-details {
             font-size: 0.8rem;
             color: #ccc;
             font-weight: 400;
+            line-height: 1.3;
+        }
+        
+        .venue-name {
+            font-weight: 500;
+            color: #fff;
+        }
+        
+        .room-type {
+            color: #aaa;
+        }
+        
+        .booking-date {
+            color: #10b981;
+            font-weight: 500;
         }
 
         .tag-available {
@@ -536,9 +551,18 @@
                                     <div class="availability-tag {{ 'tag-available' if availability.status == 'available' else ('tag-limited' if availability.status == 'limited' else 'tag-sold-out') }}">
                                         {% if availability.status == 'available' %}AVAILABLE{% elif availability.status == 'limited' %}LIMITED{% else %}SOLD OUT{% endif %}
                                     </div>
-                                    {% if availability.venue and availability.venue != result.item_name %}
-                                        <div class="venue-name">{{ availability.venue }}</div>
-                                    {% endif %}
+                                    <div class="venue-details">
+                                        {% if availability.venue and availability.venue != result.item_name %}
+                                            <span class="venue-name">{{ availability.venue }}</span>
+                                        {% endif %}
+                                        {% if availability.room_type %}
+                                            {% if availability.venue and availability.venue != result.item_name %} - {% endif %}
+                                            <span class="room-type">{{ availability.room_type }}</span>
+                                        {% endif %}
+                                        {% if availability.date %}
+                                            - <span class="booking-date">{{ availability.date }}</span>
+                                        {% endif %}
+                                    </div>
                                 </div>
                                 {% if availability.booking_url %}
                                     <a href="{{ availability.booking_url }}" target="_blank" class="book-link">BOOK</a>
@@ -615,13 +639,17 @@
                                           a.status === 'limited' ? 'tag-limited' : 'tag-sold-out';
                         const statusText = a.status === 'available' ? 'AVAILABLE' : 
                                          a.status === 'limited' ? 'LIMITED' : 'SOLD OUT';
-                        const venueText = a.venue && a.venue !== result.item_name ? `<div class="venue-name">${a.venue}</div>` : '';
+                        const venueText = a.venue && a.venue !== result.item_name ? `<span class="venue-name">${a.venue}</span>` : '';
+                        const roomText = a.seat_type ? `${venueText ? ' - ' : ''}<span class="room-type">${a.seat_type}</span>` : '';
+                        const dateText = a.date ? ` - <span class="booking-date">${a.date}</span>` : '';
                         const bookLink = a.booking_url ? `<a href="${a.booking_url}" target="_blank" class="book-link">BOOK</a>` : '';
                         return `
                             <div class="availability-item">
                                 <div class="availability-info">
                                     <div class="availability-tag ${statusClass}">${statusText}</div>
-                                    ${venueText}
+                                    <div class="venue-details">
+                                        ${venueText}${roomText}${dateText}
+                                    </div>
                                 </div>
                                 ${bookLink}
                             </div>
