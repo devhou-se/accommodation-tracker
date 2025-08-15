@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slop Bot - Booking Monitor</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        
+        h1, h2 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .status-card {
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .status-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+        }
+        
+        .status-card.enabled {
+            border-left: 6px solid #27ae60;
+        }
+        
+        .status-card.disabled {
+            border-left: 6px solid #e74c3c;
+        }
+        
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .status-card h3 {
+            margin-top: 0;
+            color: #2c3e50;
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .status-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .status-icon.success {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .status-icon.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-icon.unknown {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-unknown {
+            background-color: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .results-table {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .availability-status {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            margin: 2px;
+        }
+        
+        .available {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .available::before {
+            content: '✓';
+            font-size: 10px;
+        }
+        
+        .limited {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .limited::before {
+            content: '⚠';
+            font-size: 10px;
+        }
+        
+        .sold-out {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .sold-out::before {
+            content: '✕';
+            font-size: 10px;
+        }
+        
+        .not-on-sale {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+        
+        .not-on-sale::before {
+            content: '◐';
+            font-size: 10px;
+        }
+        
+        .error {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            color: white;
+        }
+        
+        .error::before {
+            content: '!';
+            font-size: 10px;
+        }
+        
+        .unknown {
+            background: linear-gradient(135deg, #9ca3af, #6b7280);
+            color: white;
+        }
+        
+        .unknown::before {
+            content: '?';
+            font-size: 10px;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+        }
+        
+        .btn-small {
+            padding: 4px 12px;
+            font-size: 12px;
+            border-radius: 15px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .refresh-info {
+            font-size: 14px;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid rgba(102, 126, 234, 0.2);
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .availability-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            padding: 8px;
+            background: rgba(248, 249, 250, 0.8);
+            border-radius: 8px;
+            transition: background 0.2s ease;
+        }
+        
+        .availability-item:hover {
+            background: rgba(248, 249, 250, 1);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+            
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .results-table {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 600px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 Slop Bot - Booking Monitor 🤖</h1>
+            <div class="refresh-info">
+                Last updated: <span id="last-updated">{{ current_time.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+                <button class="btn" onclick="refreshData()">Refresh</button>
+            </div>
+        </div>
+        
+        <h2>Plugin Status</h2>
+        <div class="status-grid" id="plugin-status">
+            {% for plugin in plugin_status %}
+            <div class="status-card {{ 'enabled' if plugin.enabled else 'disabled' }}">
+                <h3>
+                    <span class="status-icon {{ 'success' if plugin.last_success else ('error' if plugin.last_check else 'unknown') }}">
+                        {{ '✓' if plugin.last_success else ('✕' if plugin.last_check else '?') }}
+                    </span>
+                    {{ plugin.name }}
+                </h3>
+                <p><strong>Type:</strong> {{ plugin.type }}</p>
+                <p><strong>Accommodation:</strong> {{ plugin.event_info.name }}</p>
+                <p><strong>Location:</strong> {{ plugin.event_info.venue }}</p>
+                <p><strong>Check Interval:</strong> {{ plugin.check_interval_minutes }} minutes</p>
+                <p><strong>Last Check:</strong> 
+                    {% if plugin.last_check %}
+                        {{ plugin.last_check.strftime('%Y-%m-%d %H:%M:%S') }}
+                        <span class="status-badge {{ 'status-success' if plugin.last_success else 'status-error' }}">
+                            {{ 'Success' if plugin.last_success else 'Error' }}
+                        </span>
+                    {% else %}
+                        <span class="status-badge status-unknown">Never</span>
+                    {% endif %}
+                </p>
+                <button class="btn btn-success" onclick="manualCheck('{{ plugin.name }}')">Check Now</button>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <h2>Recent Check Results</h2>
+        <div class="results-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Plugin</th>
+                        <th>Accommodation</th>
+                        <th>Status</th>
+                        <th>Availabilities</th>
+                    </tr>
+                </thead>
+                <tbody id="results-table">
+                    {% for result in recent_results %}
+                    <tr>
+                        <td>{{ result.check_time.strftime('%m-%d %H:%M') }}</td>
+                        <td>{{ result.plugin_name }}</td>
+                        <td>{{ result.event_name }}</td>
+                        <td>
+                            <span class="status-badge {{ 'status-success' if result.success else 'status-error' }}">
+                                {{ 'Success' if result.success else 'Error' }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if result.success %}
+                                {% for availability in result.availabilities %}
+                                    <div class="availability-item">
+                                        <span class="availability-status {{ availability.status.replace('_', '-') }}">
+                                            {{ availability.status.replace('_', ' ').title() }}
+                                        </span>
+                                        <span>{{ availability.seat_type }}</span>
+                                        {% if availability.booking_url %}
+                                            <a href="{{ availability.booking_url }}" target="_blank" class="btn btn-small">View</a>
+                                        {% endif %}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                <span style="color: #dc2626; font-weight: 500;">{{ result.error_message }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function refreshData() {
+            document.body.classList.add('loading');
+            
+            fetch('/api/results?limit=20')
+                .then(response => response.json())
+                .then(data => {
+                    updateResultsTable(data);
+                    document.getElementById('last-updated').textContent = new Date().toLocaleString();
+                })
+                .catch(error => {
+                    console.error('Error refreshing data:', error);
+                    alert('Error refreshing data. Please try again.');
+                })
+                .finally(() => {
+                    document.body.classList.remove('loading');
+                });
+        }
+        
+        function manualCheck(pluginName) {
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'Checking...';
+            
+            fetch(`/api/check/${pluginName}`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(`Check completed for ${pluginName}`);
+                    refreshData();
+                })
+                .catch(error => {
+                    console.error('Error running manual check:', error);
+                    alert('Error running check. Please try again.');
+                })
+                .finally(() => {
+                    button.disabled = false;
+                    button.textContent = 'Check Now';
+                });
+        }
+        
+        function updateResultsTable(results) {
+            const tbody = document.getElementById('results-table');
+            tbody.innerHTML = '';
+            
+            results.forEach(result => {
+                const row = document.createElement('tr');
+                
+                const availabilitiesHtml = result.success ? 
+                    result.availabilities.map(a => `
+                        <div class="availability-item">
+                            <span class="availability-status ${a.status.replace(/_/g, '-')}">${a.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
+                            <span>${a.seat_type}</span>
+                            ${a.booking_url ? `<a href="${a.booking_url}" target="_blank" class="btn btn-small">View</a>` : ''}
+                        </div>
+                    `).join('') :
+                    `<span style="color: #dc2626; font-weight: 500;">${result.error_message}</span>`;
+                
+                row.innerHTML = `
+                    <td>${new Date(result.check_time).toLocaleDateString()} ${new Date(result.check_time).toLocaleTimeString()}</td>
+                    <td>${result.plugin_name}</td>
+                    <td>${result.event_name}</td>
+                    <td><span class="status-badge ${result.success ? 'status-success' : 'status-error'}">${result.success ? 'Success' : 'Error'}</span></td>
+                    <td>${availabilitiesHtml}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Auto-refresh every 5 minutes
+        setInterval(refreshData, 5 * 60 * 1000);
+    </script>
+</body>
+</html>

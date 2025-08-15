@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  ticket-tracker:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - CONFIG_PATH=/app/config.json
+    volumes:
+      - ./config.json:/app/config.json:ro
+      - ./data:/app/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

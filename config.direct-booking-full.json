@@ -1,0 +1,40 @@
+{
+  "email": {
+    "enabled": true,
+    "provider": "mailgun",
+    "config": {
+      "domain": "mg.butlerb3.dev",
+      "api_key": "YOUR_MAILGUN_API_KEY",
+      "from_email": "noreply@mg.butlerb3.dev",
+      "to_email": "butler.b.bain@gmail.com"
+    }
+  },
+  "plugins": [
+    {
+      "type": "direct_booking",
+      "name": "shirakawa_direct_booking_full",
+      "enabled": true,
+      "check_interval_minutes": 120,
+      "config": {
+        "booking_urls": [
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560045&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560023&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560043&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560018&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560025&ty=lim&plan=2&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560026&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560044&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560016&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560022&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560017&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560035&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560019&lan=ENG&kid=00156",
+          "https://www6.489pro.com/asp/489/menu.asp?id=21560047&lan=ENG&kid=00156"
+        ],
+        "target_dates": ["2025-10-10"]
+      }
+    }
+  ],
+  "web_port": 8080,
+  "log_level": "INFO"
+}
