@@ -20,7 +20,9 @@ RUN apt-get update && apt-get install -y \
     libatk1.0-0 \
     libcairo-gobject2 \
     libgtk-3-0 \
-    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libgbm1 \
+    fonts-unifont \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
@@ -30,12 +32,11 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers
-RUN playwright install chromium && \
-    playwright install-deps chromium
+RUN playwright install chromium
 
 # Copy application code
 COPY src/ ./src/
-COPY config.example.json ./
+#COPY config.example.json ./
 
 # Create templates directory and copy templates
 RUN mkdir -p src/templates

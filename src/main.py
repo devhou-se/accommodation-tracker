@@ -55,7 +55,7 @@ async def main():
     
     # Start scheduler
     await scheduler.start()
-    logger.info("Ticket availability tracker started")
+    logger.info("Availability tracker started")
     
     # Start web server
     web_config = uvicorn.Config(
@@ -110,7 +110,7 @@ async def single_run():
         results = await scheduler.run_manual_check()
         
         for result in results:
-            print(f"\n=== {result.event_name} ===")
+            print(f"\n=== {result.item_name} ===")
             print(f"Plugin: {result.plugin_name}")
             print(f"Check time: {result.check_time}")
             print(f"Success: {result.success}")
@@ -118,7 +118,7 @@ async def single_run():
             if result.success:
                 print("Availabilities:")
                 for availability in result.availabilities:
-                    print(f"  - {availability.seat_type}: {availability.status}")
+                    print(f"  - {availability.room_type}: {availability.status}")
                     if availability.booking_url:
                         print(f"    Booking URL: {availability.booking_url}")
             else:

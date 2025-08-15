@@ -105,9 +105,9 @@ class TicketScheduler:
             if self._should_send_notification(result):
                 success = await self.email_service.send_availability_notification(result)
                 if success:
-                    logging.info(f"Notification sent for {result.event_name}")
+                    logging.info(f"Notification sent for {result.item_name}")
                 else:
-                    logging.error(f"Failed to send notification for {result.event_name}")
+                    logging.error(f"Failed to send notification for {result.item_name}")
         except Exception as e:
             logging.error(f"Error sending notification: {e}")
     
@@ -161,7 +161,7 @@ class TicketScheduler:
                 "check_interval_minutes": plugin_config.check_interval_minutes,
                 "last_check": latest_result.check_time if latest_result else None,
                 "last_success": latest_result.success if latest_result else None,
-                "event_info": plugin.get_event_info()
+                "event_info": plugin.get_item_info()
             })
         
         return status

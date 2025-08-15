@@ -14,7 +14,7 @@ class WebApp:
     def __init__(self, scheduler: TicketScheduler, config: AppConfig):
         self.scheduler = scheduler
         self.config = config
-        self.app = FastAPI(title="Ticket Availability Tracker")
+        self.app = FastAPI(title="Availability Tracker")
         self.templates = Jinja2Templates(directory="src/templates")
         
         # Setup routes
@@ -75,14 +75,14 @@ class WebApp:
         """Serialize CheckResult for JSON response"""
         return {
             "plugin_name": result.plugin_name,
-            "event_name": result.event_name,
+            "item_name": result.item_name,
             "check_time": result.check_time.isoformat(),
             "success": result.success,
             "error_message": result.error_message,
             "availabilities": [
                 {
                     "date": a.date,
-                    "seat_type": a.seat_type,
+                    "seat_type": a.room_type,
                     "status": a.status,
                     "price": a.price,
                     "booking_url": a.booking_url,

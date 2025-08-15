@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Slop Bot - Booking Monitor</title>
+    <title>Slop Bot - Availability Monitor</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -355,7 +355,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏠 Slop Bot - Booking Monitor 🤖</h1>
+            <h1>🤖 Slop Bot - Availability Monitor 🎯</h1>
             <div class="refresh-info">
                 Last updated: <span id="last-updated">{{ current_time.strftime('%Y-%m-%d %H:%M:%S') }}</span>
                 <button class="btn" onclick="refreshData()">Refresh</button>
@@ -373,8 +373,8 @@
                     {{ plugin.name }}
                 </h3>
                 <p><strong>Type:</strong> {{ plugin.type }}</p>
-                <p><strong>Accommodation:</strong> {{ plugin.event_info.name }}</p>
-                <p><strong>Location:</strong> {{ plugin.event_info.venue }}</p>
+                <p><strong>Item:</strong> {{ plugin.event_info.name }}</p>
+                <p><strong>Venues:</strong> {% for venue in plugin.event_info.venues %}{{ venue }}{% if not loop.last %}, {% endif %}{% endfor %}</p>
                 <p><strong>Check Interval:</strong> {{ plugin.check_interval_minutes }} minutes</p>
                 <p><strong>Last Check:</strong> 
                     {% if plugin.last_check %}
@@ -398,7 +398,7 @@
                     <tr>
                         <th>Time</th>
                         <th>Plugin</th>
-                        <th>Accommodation</th>
+                        <th>Item</th>
                         <th>Status</th>
                         <th>Availabilities</th>
                     </tr>
@@ -408,7 +408,7 @@
                     <tr>
                         <td>{{ result.check_time.strftime('%m-%d %H:%M') }}</td>
                         <td>{{ result.plugin_name }}</td>
-                        <td>{{ result.event_name }}</td>
+                        <td>{{ result.item_name }}</td>
                         <td>
                             <span class="status-badge {{ 'status-success' if result.success else 'status-error' }}">
                                 {{ 'Success' if result.success else 'Error' }}
@@ -421,7 +421,7 @@
                                         <span class="availability-status {{ availability.status.replace('_', '-') }}">
                                             {{ availability.status.replace('_', ' ').title() }}
                                         </span>
-                                        <span>{{ availability.seat_type }}</span>
+                                        <span>{{ availability.room_type }}{% if availability.venue %} - {{ availability.venue }}{% endif %}</span>
                                         {% if availability.booking_url %}
                                             <a href="{{ availability.booking_url }}" target="_blank" class="btn btn-small">View</a>
                                         {% endif %}
@@ -489,7 +489,7 @@
                     result.availabilities.map(a => `
                         <div class="availability-item">
                             <span class="availability-status ${a.status.replace(/_/g, '-')}">${a.status.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</span>
-                            <span>${a.seat_type}</span>
+                            <span>${a.seat_type}${a.venue ? ' - ' + a.venue : ''}</span>
                             ${a.booking_url ? `<a href="${a.booking_url}" target="_blank" class="btn btn-small">View</a>` : ''}
                         </div>
                     `).join('') :
@@ -498,7 +498,7 @@
                 row.innerHTML = `
                     <td>${new Date(result.check_time).toLocaleDateString()} ${new Date(result.check_time).toLocaleTimeString()}</td>
                     <td>${result.plugin_name}</td>
-                    <td>${result.event_name}</td>
+                    <td>${result.item_name}</td>
                     <td><span class="status-badge ${result.success ? 'status-success' : 'status-error'}">${result.success ? 'Success' : 'Error'}</span></td>
                     <td>${availabilitiesHtml}</td>
                 `;

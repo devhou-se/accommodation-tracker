@@ -36,7 +36,7 @@ class SumoPlugin(TicketPlugin):
             
             return CheckResult(
                 plugin_name=self.name,
-                event_name=f"{self.year} {self._get_month_name()} Grand Tournament",
+                item_name=f"{self.year} {self._get_month_name()} Grand Tournament",
                 check_time=datetime.now(),
                 availabilities=main_availabilities,
                 success=True
@@ -45,7 +45,7 @@ class SumoPlugin(TicketPlugin):
         except Exception as e:
             return CheckResult(
                 plugin_name=self.name,
-                event_name=f"{self.year} {self._get_month_name()} Grand Tournament",
+                item_name=f"{self.year} {self._get_month_name()} Grand Tournament",
                 check_time=datetime.now(),
                 availabilities=[],
                 success=False,
@@ -73,7 +73,7 @@ class SumoPlugin(TicketPlugin):
             if tournament_section and ("sold out" in tournament_section.get_text().lower() or "tickets are sold out" in tournament_section.get_text().lower()):
                 availabilities.append(TicketAvailability(
                     date="All dates",
-                    seat_type="All seats",
+                    room_type="All seats",
                     status="sold_out",
                     price="Tournament sold out"
                 ))
@@ -115,24 +115,25 @@ class SumoPlugin(TicketPlugin):
                                     
                                     availabilities.append(TicketAvailability(
                                         date="Tournament period",
-                                        seat_type="All seat types",
+                                        room_type="All seat types",
                                         status="available",
                                         booking_url=href,
                                         price="Tickets available for purchase",
                                         venue=self._get_venue()
                                     ))
                                     return availabilities  # Found our target, return immediately
-                                elif dash_element and "―" in dash_element.get_text():
-                                    # Dash means not yet on sale
-                                    availabilities.append(TicketAvailability(
-                                        date="Tournament period",
-                                        seat_type="All seat types", 
-                                        status="not_on_sale",
-                                        price="Tickets not yet on sale",
-                                        venue=self._get_venue(),
-                                        booking_url=self.base_url  # Link to main page for information
-                                    ))
-                                    return availabilities  # Found our target, return immediately
+                                # Skip "not_on_sale" entries - only show when tickets are available
+                                # elif dash_element and "―" in dash_element.get_text():
+                                #     # Dash means not yet on sale
+                                #     availabilities.append(TicketAvailability(
+                                #         date="Tournament period",
+                                #         room_type="All seat types", 
+                                #         status="not_on_sale",
+                                #         price="Tickets not yet on sale",
+                                #         venue=self._get_venue(),
+                                #         booking_url=self.base_url  # Link to main page for information
+                                #     ))
+                                #     return availabilities  # Found our target, return immediately
                             break
             
             # If we're on a specific tournament page, check for detailed availability
@@ -141,14 +142,15 @@ class SumoPlugin(TicketPlugin):
                 sale_date_pattern = r"Goes on Sale[：:]\s*([^*\n]+)"
                 sale_date_match = re.search(sale_date_pattern, page_text)
                 
-                if sale_date_match:
-                    sale_date = sale_date_match.group(1).strip()
-                    availabilities.append(TicketAvailability(
-                        date="Sale information",
-                        seat_type="All seats",
-                        status="not_on_sale",
-                        price=f"Sale starts: {sale_date}"
-                    ))
+                # Skip adding "not_on_sale" entries - only show when tickets are actually available
+                # if sale_date_match:
+                #     sale_date = sale_date_match.group(1).strip()
+                #     availabilities.append(TicketAvailability(
+                #         date="Sale information",
+                #         room_type="All seats",
+                #         status="not_on_sale",
+                #         price=f"Sale starts: {sale_date}"
+                #     ))
                 
                 # Check for specific booking buttons/links
                 booking_links = soup.find_all('a', href=lambda x: x and 'sell.pia.jp' in x)
@@ -167,39 +169,40 @@ class SumoPlugin(TicketPlugin):
                     
                     # Determine seat type
                     if "box" in link_text.lower() and "special" not in link_text.lower():
-                        seat_type = "Box Seats (4 guests)"
+                        room_type = "Box Seats (4 guests)"
                     elif "special" in link_text.lower():
-                        seat_type = "Special Box (2 guests)"
+                        room_type = "Special Box (2 guests)"
                     elif "chair" in link_text.lower() or "arena" in link_text.lower():
-                        seat_type = "Chair Seats"
+                        room_type = "Chair Seats"
                     else:
-                        seat_type = "Tickets"
+                        room_type = "Tickets"
                     
                     availabilities.append(TicketAvailability(
                         date="Tournament dates",
-                        seat_type=seat_type,
+                        room_type=room_type,
                         status="available",
                         booking_url=href,
                         venue=self._get_venue()
                     ))
             
-            # If no availability data found, default to checking again later
-            if not availabilities:
-                availabilities.append(TicketAvailability(
-                    date="Status unknown",
-                    seat_type="All seats",
-                    status="unknown",
-                    price="Could not determine ticket status",
-                    venue=self._get_venue(),
-                    booking_url=self.base_url  # Link to main page for information
-                ))
+            # If no availability data found, don't add fallback entries
+            # Just return empty list - only show actual ticket availability
+            # if not availabilities:
+            #     availabilities.append(TicketAvailability(
+            #         date="Status unknown",
+            #         room_type="All seats",
+            #         status="unknown",
+            #         price="Could not determine ticket status",
+            #         venue=self._get_venue(),
+            #         booking_url=self.base_url  # Link to main page for information
+            #     ))
         
         except Exception as e:
             # Log error but don't fail completely
             print(f"Error extracting availability data: {e}")
             availabilities.append(TicketAvailability(
                 date="Error",
-                seat_type="All seats",
+                room_type="All seats",
                 status="error",
                 price=f"Error checking: {str(e)}"
             ))
@@ -215,6 +218,10 @@ class SumoPlugin(TicketPlugin):
             "year": self.year,
             "url": self.base_url
         }
+    
+    def get_item_info(self) -> Dict:
+        """Get basic item information - required by BookingPlugin base class"""
+        return self.get_event_info()  # For sumo, item info is the same as event info
     
     def _get_month_name(self) -> str:
         """Get month name from month number"""

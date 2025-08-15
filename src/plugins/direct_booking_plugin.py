@@ -17,6 +17,7 @@ class DirectBookingPlugin(BookingPlugin):
         self.target_dates = [datetime.strptime(date, '%Y-%m-%d').date() for date in config.get('target_dates', [])]
         self.browser: Optional[Browser] = None
         self.logger = logging.getLogger(__name__)
+        self.extracted_accommodation_names = []  # Store extracted names
 
     async def initialize(self):
         self.playwright = await async_playwright().start()
@@ -80,9 +81,12 @@ class DirectBookingPlugin(BookingPlugin):
             )
             ticket_availabilities.append(booking_avail)
 
+        # Use the first extracted accommodation name, or fallback to static name
+        accommodation_name = self.extracted_accommodation_names[0] if self.extracted_accommodation_names else "Shirakawa-go Accommodation"
+        
         return CheckResult(
             plugin_name=self.name,
-            accommodation_name="Shirakawa-go Accommodation",
+            item_name=accommodation_name,
             check_time=datetime.now(),
             availabilities=ticket_availabilities,
             success=True
@@ -97,6 +101,9 @@ class DirectBookingPlugin(BookingPlugin):
 
             # Extract accommodation name from page
             accommodation_name = await self._extract_accommodation_name(page)
+            # Store extracted accommodation name
+            if accommodation_name and accommodation_name not in self.extracted_accommodation_names:
+                self.extracted_accommodation_names.append(accommodation_name)
             
             # Find packages that match the target date
             matching_packages = await self._find_matching_packages(page, target_date)
@@ -357,12 +364,16 @@ class DirectBookingPlugin(BookingPlugin):
 
         return availabilities
 
-    def get_accommodation_info(self) -> Dict:
+    def get_item_info(self) -> Dict:
         """Get basic accommodation information"""
+        # Use extracted accommodation names if available, otherwise fallback to static name
+        accommodation_name = ", ".join(self.extracted_accommodation_names) if self.extracted_accommodation_names else "Shirakawa-go Accommodation"
+        venues = self.extracted_accommodation_names if self.extracted_accommodation_names else [f"URL {i+1}" for i in range(len(self.booking_urls))]
+        
         return {
-            "name": "Shirakawa-go Accommodation",
+            "name": accommodation_name,
             "dates": [date.strftime('%Y-%m-%d') for date in self.target_dates],
-            "venues": [f"URL {i+1}" for i in range(len(self.booking_urls))]
+            "venues": venues
         }
 
     def get_plugin_info(self) -> Dict[str, Any]:

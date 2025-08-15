@@ -17,9 +17,9 @@ class BookingAvailability:
 
 @dataclass
 class CheckResult:
-    """Result of checking booking availability"""
+    """Result of checking availability"""
     plugin_name: str
-    accommodation_name: str
+    item_name: str  # Name of the item being tracked (accommodation, event, etc.)
     check_time: datetime
     availabilities: List[BookingAvailability]
     success: bool
@@ -39,8 +39,8 @@ class BookingPlugin(ABC):
         pass
     
     @abstractmethod
-    def get_accommodation_info(self) -> Dict:
-        """Get basic accommodation information"""
+    def get_item_info(self) -> Dict:
+        """Get basic information about the item being tracked"""
         pass
 
 
