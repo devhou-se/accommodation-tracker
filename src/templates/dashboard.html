@@ -488,7 +488,7 @@
                     {% if plugin.last_check %}
                     <div class="meta-item">
                         <span>🕐</span>
-                        <span>{{ plugin.last_check.strftime('%H:%M') }}</span>
+                        <span>{{ (plugin.last_check|to_jst).strftime('%H:%M JST') }}</span>
                     </div>
                     {% endif %}
                     {% if 'direct_booking' in plugin.name %}
@@ -516,12 +516,12 @@
                 {% for result in recent_results %}
                 <div class="activity-item">
                     <div class="activity-header">
-                        <div class="activity-time">{{ result.check_time.strftime('%H:%M') }}</div>
+                        <div class="activity-time">{{ (result.check_time|to_jst).strftime('%H:%M JST') }}</div>
                         <div class="activity-title">
                             {% if 'sumo' in result.plugin_name %}
                                 🥋 {{ result.item_name }}
                             {% elif 'direct_booking' in result.plugin_name %}
-                                🏠 {{ result.item_name }}
+                                🏠 Traditional Shirakawa Ryokans
                             {% else %}
                                 📍 {{ result.item_name }}
                             {% endif %}
@@ -598,12 +598,16 @@
                 item.className = 'activity-item';
                 
                 const timeStr = new Date(result.check_time).toLocaleTimeString('en-US', {
+                    timeZone: 'Asia/Tokyo',
                     hour12: false,
                     hour: '2-digit',
                     minute: '2-digit'
-                });
+                }) + ' JST';
                 
                 const typeIcon = result.plugin_name.includes('sumo') ? '🥋' : '🏠';
+                const displayName = result.plugin_name.includes('sumo') ? result.item_name : 
+                                  result.plugin_name.includes('direct_booking') ? 'Traditional Shirakawa Ryokans' : 
+                                  result.item_name;
                 const availabilitiesHtml = result.success && result.availabilities ? 
                     `<div class="activity-content">` + 
                     result.availabilities.slice(0, 3).map(a => {
@@ -627,7 +631,7 @@
                 item.innerHTML = `
                     <div class="activity-header">
                         <div class="activity-time">${timeStr}</div>
-                        <div class="activity-title">${typeIcon} ${result.item_name}</div>
+                        <div class="activity-title">${typeIcon} ${displayName}</div>
                     </div>
                     ${availabilitiesHtml}
                 `;

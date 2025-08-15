@@ -2,7 +2,7 @@ import asyncio
 import json
 import logging
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from urllib.parse import urlparse, parse_qs
 
@@ -87,7 +87,7 @@ class DirectBookingPlugin(BookingPlugin):
         return CheckResult(
             plugin_name=self.name,
             item_name=accommodation_name,
-            check_time=datetime.now(),
+            check_time=datetime.now(timezone.utc),
             availabilities=ticket_availabilities,
             success=True
         )
@@ -349,7 +349,7 @@ class DirectBookingPlugin(BookingPlugin):
                                 'price': f"JPY{price}",
                                 'status': 'available',
                                 'booking_url': booking_url,
-                                'last_checked': datetime.now().isoformat()
+                                'last_checked': datetime.now(timezone.utc).isoformat()
                             }
                             
                             availabilities.append(availability)

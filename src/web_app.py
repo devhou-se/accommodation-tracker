@@ -2,8 +2,9 @@ from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
+import pytz
 from .scheduler import TicketScheduler
 from .config import AppConfig
 
@@ -16,9 +17,22 @@ class WebApp:
         self.config = config
         self.app = FastAPI(title="Availability Tracker")
         self.templates = Jinja2Templates(directory="src/templates")
+        self.jst = pytz.timezone('Asia/Tokyo')
+        
+        # Add custom filter for JST conversion
+        self.templates.env.filters['to_jst'] = self._to_jst
         
         # Setup routes
         self._setup_routes()
+    
+    def _to_jst(self, dt):
+        """Convert datetime to JST"""
+        if dt is None:
+            return None
+        if dt.tzinfo is None:
+            # Assume UTC if no timezone info
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(self.jst)
     
     def _setup_routes(self):
         """Setup web routes"""
@@ -33,7 +47,7 @@ class WebApp:
                 "request": request,
                 "plugin_status": plugin_status,
                 "recent_results": recent_results,
-                "current_time": datetime.now()
+                "current_time": datetime.now(timezone.utc)
             })
         
         @self.app.get("/api/status")
@@ -43,7 +57,7 @@ class WebApp:
                 "scheduler_running": self.scheduler.running,
                 "plugins": self.scheduler.get_plugin_status(),
                 "recent_checks": len(self.scheduler.check_history),
-                "current_time": datetime.now().isoformat()
+                "current_time": datetime.now(timezone.utc).isoformat()
             }
         
         @self.app.get("/api/results")
@@ -69,7 +83,7 @@ class WebApp:
         @self.app.get("/health")
         async def health_check():
             """Health check endpoint"""
-            return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+            return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
     
     def _serialize_result(self, result):
         """Serialize CheckResult for JSON response"""

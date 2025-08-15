@@ -3,7 +3,7 @@ import requests
 import asyncio
 import json
 from typing import Dict, List, Optional, Tuple
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse, parse_qs
 from .base import TicketPlugin, TicketAvailability, CheckResult
@@ -75,7 +75,7 @@ class ShirakawaAccommodationPlugin(TicketPlugin):
             return CheckResult(
                 plugin_name=self.name,
                 event_name="Shirakawa-go Accommodation",
-                check_time=datetime.now(),
+                check_time=datetime.now(timezone.utc),
                 availabilities=all_availabilities,
                 success=True
             )
@@ -86,7 +86,7 @@ class ShirakawaAccommodationPlugin(TicketPlugin):
             return CheckResult(
                 plugin_name=self.name,
                 event_name="Shirakawa-go Accommodation",
-                check_time=datetime.now(),
+                check_time=datetime.now(timezone.utc),
                 availabilities=[],
                 success=False,
                 error_message=str(e)
@@ -933,7 +933,7 @@ class ShirakawaAccommodationPlugin(TicketPlugin):
     def _write_accommodation_log(self):
         """Write accommodation log to file for debugging"""
         try:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            timestamp = datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
             log_filename = f"accommodation_log_{timestamp}.json"
             
             # Create summary statistics

@@ -1,7 +1,7 @@
 import re
 import requests
 from typing import Dict, List
-from datetime import datetime
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
 from .base import TicketPlugin, TicketAvailability, CheckResult
 
@@ -37,7 +37,7 @@ class SumoPlugin(TicketPlugin):
             return CheckResult(
                 plugin_name=self.name,
                 item_name=f"{self.year} {self._get_month_name()} Grand Tournament",
-                check_time=datetime.now(),
+                check_time=datetime.now(timezone.utc),
                 availabilities=main_availabilities,
                 success=True
             )
@@ -46,7 +46,7 @@ class SumoPlugin(TicketPlugin):
             return CheckResult(
                 plugin_name=self.name,
                 item_name=f"{self.year} {self._get_month_name()} Grand Tournament",
-                check_time=datetime.now(),
+                check_time=datetime.now(timezone.utc),
                 availabilities=[],
                 success=False,
                 error_message=str(e)
