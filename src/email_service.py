@@ -69,13 +69,13 @@ class EmailService:
     def _create_subject(self, result: CheckResult) -> str:
         """Create email subject line"""
         if not result.success:
-            return f"🤖 Slop Bot - Error checking {result.item_name}"
+            return f"⚡ SPOT HUNTER - Error checking {result.item_name}"
         
         available_count = len([a for a in result.availabilities if a.status == "available"])
         if available_count > 0:
-            return f"🤖 Slop Bot - Availability Found: {result.item_name}"
+            return f"⚡ SPOT HUNTER - Availability Found: {result.item_name}"
         else:
-            return f"🤖 Slop Bot - Status Update: {result.item_name}"
+            return f"⚡ SPOT HUNTER - Status Update: {result.item_name}"
     
     def _create_html_body(self, result: CheckResult) -> str:
         """Create HTML email body"""
@@ -89,50 +89,57 @@ class EmailService:
                 <title>🤖 Slop Bot - Error Report</title>
                 <style>
                     body {{
-                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                         margin: 0;
                         padding: 20px;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                        color: #333;
+                        background: #0a0a0a;
+                        color: #ffffff;
                         min-height: 100vh;
                     }}
                     .container {{
                         max-width: 600px;
                         margin: 0 auto;
-                        background: white;
-                        border-radius: 16px;
+                        background: rgba(20, 20, 20, 0.9);
+                        border-radius: 20px;
+                        border: 1px solid rgba(255, 255, 255, 0.1);
                         padding: 30px;
-                        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                        box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+                        backdrop-filter: blur(20px);
                     }}
                     h1 {{
-                        color: #2c3e50;
+                        color: #ffffff;
                         font-size: 1.8rem;
                         font-weight: 700;
                         text-align: center;
                         margin-bottom: 25px;
-                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        background: linear-gradient(45deg, #00ff87, #00d4ff, #8338ec, #ff006e);
+                        background-size: 300% 300%;
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
+                        text-transform: uppercase;
+                        letter-spacing: 2px;
                     }}
                     .error-card {{
-                        background: linear-gradient(145deg, #f8d7da, #f5c6cb);
+                        background: rgba(255, 0, 110, 0.1);
                         border-radius: 12px;
                         padding: 20px;
-                        border-left: 4px solid #dc3545;
+                        border: 1px solid rgba(255, 0, 110, 0.3);
+                        border-left: 4px solid #ff006e;
                     }}
                     p {{
                         margin: 10px 0;
                         line-height: 1.5;
+                        color: #ffffff;
                     }}
                     strong {{
-                        color: #2c3e50;
+                        color: #00ff87;
                     }}
                 </style>
             </head>
             <body>
                 <div class="container">
-                    <h1>🤖 Slop Bot - Error Report</h1>
+                    <h1>🤖 SPOT HUNTER - Error Report</h1>
                     <div class="error-card">
                         <p><strong>Item:</strong> {result.item_name}</p>
                         <p><strong>Plugin:</strong> {result.plugin_name}</p>
@@ -153,62 +160,76 @@ class EmailService:
             <title>🤖 Slop Bot - Availability Monitor</title>
             <style>
                 body {{
-                    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                     margin: 0;
                     padding: 20px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    color: #333;
+                    background: #0a0a0a;
+                    color: #ffffff;
                     min-height: 100vh;
                 }}
                 .container {{
                     max-width: 800px;
                     margin: 0 auto;
-                    background: white;
-                    border-radius: 16px;
+                    background: rgba(20, 20, 20, 0.9);
+                    border-radius: 20px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
                     padding: 30px;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+                    backdrop-filter: blur(20px);
                 }}
                 h1 {{
-                    color: #2c3e50;
+                    color: #ffffff;
                     font-size: 1.8rem;
                     font-weight: 700;
                     text-align: center;
                     margin-bottom: 25px;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    background: linear-gradient(45deg, #00ff87, #00d4ff, #8338ec, #ff006e);
+                    background-size: 300% 300%;
                     -webkit-background-clip: text;
                     -webkit-text-fill-color: transparent;
                     background-clip: text;
+                    text-transform: uppercase;
+                    letter-spacing: 2px;
                 }}
                 h2 {{
-                    color: #2c3e50;
+                    color: #ffffff;
                     font-size: 1.3rem;
                     font-weight: 600;
                     margin-bottom: 15px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
                 }}
                 .info-card {{
-                    background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+                    background: rgba(0, 255, 135, 0.1);
                     border-radius: 12px;
                     padding: 20px;
                     margin-bottom: 20px;
-                    border-left: 4px solid #28a745;
+                    border: 1px solid rgba(0, 255, 135, 0.3);
+                    border-left: 4px solid #00ff87;
                 }}
                 table {{
                     width: 100%;
                     border-collapse: collapse;
-                    background: white;
-                    border-radius: 8px;
+                    background: rgba(15, 15, 15, 0.8);
+                    border-radius: 12px;
                     overflow: hidden;
-                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    border: 1px solid rgba(255, 255, 255, 0.05);
                 }}
                 th, td {{
                     padding: 12px;
                     text-align: left;
-                    border-bottom: 1px solid #eee;
+                    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+                    color: #ffffff;
                 }}
                 th {{
-                    background-color: #f8f9fa;
+                    background: rgba(255, 255, 255, 0.03);
                     font-weight: 600;
-                    color: #2c3e50;
+                    color: #00ff87;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    font-size: 0.9rem;
                 }}
                 .availability-status {{
                     padding: 6px 12px;
@@ -222,40 +243,53 @@ class EmailService:
                     gap: 4px;
                 }}
                 .available {{
-                    background: linear-gradient(135deg, #10b981, #059669);
-                    color: white;
+                    background: rgba(0, 255, 135, 0.2);
+                    color: #00ff87;
+                    border: 1px solid rgba(0, 255, 135, 0.3);
                 }}
                 .available::before {{
                     content: '✓';
                     font-size: 10px;
                 }}
                 .limited {{
-                    background: linear-gradient(135deg, #f59e0b, #d97706);
-                    color: white;
+                    background: rgba(255, 190, 11, 0.2);
+                    color: #ffbe0b;
+                    border: 1px solid rgba(255, 190, 11, 0.3);
                 }}
                 .limited::before {{
                     content: '⚠';
                     font-size: 10px;
                 }}
                 .sold-out {{
-                    background: linear-gradient(135deg, #ef4444, #dc2626);
-                    color: white;
+                    background: rgba(255, 0, 110, 0.2);
+                    color: #ff006e;
+                    border: 1px solid rgba(255, 0, 110, 0.3);
                 }}
                 .sold-out::before {{
                     content: '✕';
                     font-size: 10px;
                 }}
                 .not-on-sale {{
-                    background: linear-gradient(135deg, #6b7280, #4b5563);
-                    color: white;
+                    background: rgba(131, 56, 236, 0.2);
+                    color: #8338ec;
+                    border: 1px solid rgba(131, 56, 236, 0.3);
                 }}
                 .not-on-sale::before {{
                     content: '◐';
                     font-size: 10px;
                 }}
+                .fully-booked {{
+                    background: rgba(255, 0, 110, 0.2);
+                    color: #ff006e;
+                    border: 1px solid rgba(255, 0, 110, 0.3);
+                }}
+                .fully-booked::before {{
+                    content: '✕';
+                    font-size: 10px;
+                }}
                 .btn {{
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    color: white;
+                    background: linear-gradient(45deg, #00ff87, #00d4ff);
+                    color: #000000;
                     border: none;
                     padding: 8px 16px;
                     border-radius: 20px;
@@ -263,26 +297,29 @@ class EmailService:
                     font-size: 12px;
                     font-weight: 600;
                     display: inline-block;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
                 }}
                 p {{
                     margin: 10px 0;
                     line-height: 1.5;
+                    color: #ffffff;
                 }}
                 strong {{
-                    color: #2c3e50;
+                    color: #00ff87;
                 }}
                 .footer {{
                     text-align: center;
                     margin-top: 30px;
                     font-style: italic;
-                    color: #6c757d;
+                    color: #888888;
                     font-size: 14px;
                 }}
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>🤖 Slop Bot - Availability Monitor 🎯</h1>
+                <h1>⚡ SPOT HUNTER - Availability Alert</h1>
                 <div class="info-card">
                     <p><strong>Item:</strong> {result.item_name}</p>
                     <p><strong>Check Time:</strong> {result.check_time.strftime('%Y-%m-%d %H:%M:%S')}</p>
@@ -332,7 +369,7 @@ class EmailService:
         """Create plain text email body"""
         if not result.success:
             return f"""
-🤖 Slop Bot - Error Report
+⚡ SPOT HUNTER - Error Report
 
 Item: {result.item_name}
 Plugin: {result.plugin_name}
@@ -341,7 +378,7 @@ Error: {result.error_message}
             """
         
         text = f"""
-🤖 Slop Bot - Availability Monitor 🎯
+⚡ SPOT HUNTER - Availability Alert
 
 Item: {result.item_name}
 Check Time: {result.check_time.strftime('%Y-%m-%d %H:%M:%S')}

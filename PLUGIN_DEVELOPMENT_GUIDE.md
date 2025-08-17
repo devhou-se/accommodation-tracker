@@ -1,16 +1,16 @@
 # Plugin Development Guide
 
-This guide explains how to create new ticket availability checking plugins for the Ticket Availability Tracker service.
+This guide explains how to create new booking availability checking plugins for the Accommodation Tracker service.
 
 ## Overview
 
-The plugin system allows you to extend the service to monitor ticket availability on different websites. Each plugin implements a standardized interface for checking availability and returning structured results.
+The plugin system allows you to extend the service to monitor booking availability on different websites. Each plugin implements a standardized interface for checking availability and returning structured results.
 
 ## Plugin Architecture
 
 ### Base Classes
 
-All plugins must inherit from the base `TicketPlugin` class located in `src/plugins/base.py`:
+All plugins must inherit from the base `BookingPlugin` class located in `src/plugins/base.py`:
 
 ```python
 from abc import ABC, abstractmethod
@@ -19,27 +19,27 @@ from dataclasses import dataclass
 from datetime import datetime
 
 @dataclass
-class TicketAvailability:
-    """Represents ticket availability for a specific event/date"""
+class BookingAvailability:
+    """Represents booking availability for a specific accommodation/date"""
     date: str
-    seat_type: str
-    status: str  # 'available', 'limited', 'sold_out', 'not_on_sale'
+    room_type: str
+    status: str  # 'available', 'limited', 'fully_booked'
     price: Optional[str] = None
     booking_url: Optional[str] = None
     venue: Optional[str] = None
 
 @dataclass
 class CheckResult:
-    """Result of checking ticket availability"""
+    """Result of checking availability"""
     plugin_name: str
-    event_name: str
+    item_name: str  # Name of the item being tracked (accommodation, event, etc.)
     check_time: datetime
-    availabilities: List[TicketAvailability]
+    availabilities: List[BookingAvailability]
     success: bool
     error_message: Optional[str] = None
 
-class TicketPlugin(ABC):
-    """Base class for ticket availability checking plugins"""
+class BookingPlugin(ABC):
+    """Base class for booking availability checking plugins"""
     
     def __init__(self, name: str, config: Dict):
         self.name = name
@@ -47,13 +47,17 @@ class TicketPlugin(ABC):
     
     @abstractmethod
     async def check_availability(self) -> CheckResult:
-        """Check ticket availability and return results"""
+        """Check booking availability and return results"""
         pass
     
     @abstractmethod
-    def get_event_info(self) -> Dict:
-        """Get basic event information"""
+    def get_item_info(self) -> Dict:
+        """Get basic information about the item being tracked"""
         pass
+
+# Legacy aliases for backward compatibility
+TicketAvailability = BookingAvailability
+TicketPlugin = BookingPlugin
 ```
 
 ## Creating a New Plugin
@@ -72,20 +76,20 @@ touch src/plugins/my_venue_plugin.py
 import re
 import requests
 from typing import Dict, List
-from datetime import datetime
+from datetime import datetime, timezone
 from bs4 import BeautifulSoup
-from .base import TicketPlugin, TicketAvailability, CheckResult
+from .base import BookingPlugin, BookingAvailability, CheckResult
 
-class MyVenuePlugin(TicketPlugin):
-    """Plugin for checking My Venue ticket availability"""
+class MyVenuePlugin(BookingPlugin):
+    """Plugin for checking My Venue booking availability"""
     
     def __init__(self, config: Dict):
         super().__init__("my_venue", config)
         self.base_url = config.get("url", "https://example.com")
-        self.event_id = config.get("event_id")
+        self.item_id = config.get("item_id")
         
     async def check_availability(self) -> CheckResult:
-        """Check ticket availability for the event"""
+        """Check booking availability for the item"""
         try:
             # Fetch the webpage
             soup = self._fetch_page(self.base_url)
@@ -95,8 +99,8 @@ class MyVenuePlugin(TicketPlugin):
             
             return CheckResult(
                 plugin_name=self.name,
-                event_name=self.config.get("event_name", "Event"),
-                check_time=datetime.now(),
+                item_name=self.config.get("item_name", "Item"),
+                check_time=datetime.now(timezone.utc),
                 availabilities=availabilities,
                 success=True
             )
@@ -104,8 +108,8 @@ class MyVenuePlugin(TicketPlugin):
         except Exception as e:
             return CheckResult(
                 plugin_name=self.name,
-                event_name=self.config.get("event_name", "Event"),
-                check_time=datetime.now(),
+                item_name=self.config.get("item_name", "Item"),
+                check_time=datetime.now(timezone.utc),
                 availabilities=[],
                 success=False,
                 error_message=str(e)
@@ -120,45 +124,45 @@ class MyVenuePlugin(TicketPlugin):
         response.raise_for_status()
         return BeautifulSoup(response.content, 'html.parser')
     
-    def _extract_availability_data(self, soup: BeautifulSoup) -> List[TicketAvailability]:
-        """Extract ticket availability from the parsed HTML"""
+    def _extract_availability_data(self, soup: BeautifulSoup) -> List[BookingAvailability]:
+        """Extract booking availability from the parsed HTML"""
         availabilities = []
         
         # TODO: Implement your website-specific parsing logic here
         # Example:
-        ticket_elements = soup.find_all('div', class_='ticket-item')
+        booking_elements = soup.find_all('div', class_='booking-item')
         
-        for element in ticket_elements:
-            seat_type = element.find('span', class_='seat-type').get_text(strip=True)
+        for element in booking_elements:
+            room_type = element.find('span', class_='room-type').get_text(strip=True)
             status_element = element.find('span', class_='status')
             
             if 'available' in status_element.get('class'):
                 status = 'available'
-                booking_link = element.find('a', class_='buy-button')
+                booking_link = element.find('a', class_='book-button')
                 booking_url = booking_link.get('href') if booking_link else None
-            elif 'sold-out' in status_element.get('class'):
-                status = 'sold_out'
+            elif 'fully-booked' in status_element.get('class'):
+                status = 'fully_booked'
                 booking_url = None
             else:
-                status = 'not_on_sale'
+                status = 'limited'
                 booking_url = None
             
-            availabilities.append(TicketAvailability(
-                date="Event date",
-                seat_type=seat_type,
+            availabilities.append(BookingAvailability(
+                date="Booking date",
+                room_type=room_type,
                 status=status,
                 booking_url=booking_url
             ))
         
         return availabilities
     
-    def get_event_info(self) -> Dict:
-        """Get basic event information"""
+    def get_item_info(self) -> Dict:
+        """Get basic item information"""
         return {
-            "name": self.config.get("event_name", "Event"),
+            "name": self.config.get("item_name", "Item"),
             "venue": self.config.get("venue", "Unknown"),
             "url": self.base_url,
-            "event_id": self.event_id
+            "item_id": self.item_id
         }
 ```
 
@@ -167,17 +171,21 @@ class MyVenuePlugin(TicketPlugin):
 Add your plugin to `src/plugins/__init__.py`:
 
 ```python
-from .base import TicketPlugin, TicketAvailability, CheckResult
+from .base import BookingPlugin, BookingAvailability, CheckResult, TicketPlugin, TicketAvailability
 from .sumo_plugin import SumoPlugin
+from .shirakawa_accommodation_plugin import ShirakawaAccommodationPlugin
+from .direct_booking_plugin import DirectBookingPlugin
 from .my_venue_plugin import MyVenuePlugin  # Add this import
 
 # Plugin registry
 AVAILABLE_PLUGINS = {
     "sumo": SumoPlugin,
+    "shirakawa_accommodation": ShirakawaAccommodationPlugin,
+    "direct_booking": DirectBookingPlugin,
     "my_venue": MyVenuePlugin  # Add this entry
 }
 
-def create_plugin(plugin_type: str, config: dict) -> TicketPlugin:
+def create_plugin(plugin_type: str, config: dict) -> BookingPlugin:
     """Factory function to create plugin instances"""
     if plugin_type not in AVAILABLE_PLUGINS:
         raise ValueError(f"Unknown plugin type: {plugin_type}")
@@ -204,9 +212,9 @@ Add your plugin configuration to `config.json`:
       "enabled": true,
       "check_interval_minutes": 60,
       "config": {
-        "url": "https://tickets.myvenue.com/events/12345",
-        "event_id": "12345",
-        "event_name": "My Concert Event",
+        "url": "https://bookings.myvenue.com/accommodations/12345",
+        "item_id": "12345",
+        "item_name": "My Accommodation",
         "venue": "My Venue"
       }
     }
@@ -230,10 +238,10 @@ Add your plugin configuration to `config.json`:
 
 Use these standard status values:
 
-- **`available`**: Tickets can be purchased now
-- **`limited`**: Few tickets remaining
-- **`sold_out`**: No tickets available
-- **`not_on_sale`**: Tickets not yet released
+- **`available`**: Bookings can be made now
+- **`limited`**: Few spots remaining
+- **`fully_booked`**: No availability
+- **`not_on_sale`**: Bookings not yet open
 - **`unknown`**: Status could not be determined
 
 ### 3. URL Handling
@@ -262,8 +270,8 @@ async def check_availability(self) -> CheckResult:
     except requests.RequestException as e:
         return CheckResult(
             plugin_name=self.name,
-            event_name=self.event_name,
-            check_time=datetime.now(),
+            item_name=self.item_name,
+            check_time=datetime.now(timezone.utc),
             availabilities=[],
             success=False,
             error_message=f"Network error: {str(e)}"
@@ -271,8 +279,8 @@ async def check_availability(self) -> CheckResult:
     except Exception as e:
         return CheckResult(
             plugin_name=self.name,
-            event_name=self.event_name,
-            check_time=datetime.now(),
+            item_name=self.item_name,
+            check_time=datetime.now(timezone.utc),
             availabilities=[],
             success=False,
             error_message=f"Unexpected error: {str(e)}"
@@ -290,9 +298,9 @@ Common configuration parameters:
   "enabled": true,
   "check_interval_minutes": 30,
   "config": {
-    "url": "https://venue.com/event",
-    "event_id": "12345",
-    "event_name": "Event Name",
+    "url": "https://venue.com/accommodation",
+    "item_id": "12345",
+    "item_name": "Accommodation Name",
     "venue": "Venue Name",
     "custom_param": "value"
   }
@@ -313,14 +321,14 @@ from src.plugins.my_venue_plugin import MyVenuePlugin
 def test_plugin_initialization():
     config = {
         "url": "https://example.com",
-        "event_id": "123"
+        "item_id": "123"
     }
     plugin = MyVenuePlugin(config)
     assert plugin.name == "my_venue"
     assert plugin.base_url == "https://example.com"
 
 async def test_check_availability():
-    config = {"url": "https://example.com", "event_name": "Test Event"}
+    config = {"url": "https://example.com", "item_name": "Test Accommodation"}
     plugin = MyVenuePlugin(config)
     
     # Mock the _fetch_page method for testing
@@ -342,8 +350,8 @@ echo '{
     "enabled": true,
     "check_interval_minutes": 60,
     "config": {
-      "url": "https://venue.com/event",
-      "event_name": "Test Event"
+      "url": "https://venue.com/accommodation",
+      "item_name": "Test Accommodation"
     }
   }],
   "web_port": 8080,
@@ -385,8 +393,8 @@ class MultiEventPlugin(TicketPlugin):
         
         return CheckResult(
             plugin_name=self.name,
-            event_name="Multiple Events",
-            check_time=datetime.now(),
+            item_name="Multiple Items",
+            check_time=datetime.now(timezone.utc),
             availabilities=all_availabilities,
             success=True
         )
@@ -405,7 +413,7 @@ async def check_availability(self) -> CheckResult:
         }
         
         response = requests.get(
-            f"{self.api_base}/events/{self.event_id}/availability",
+            f"{self.api_base}/accommodations/{self.item_id}/availability",
             headers=headers,
             timeout=30
         )
@@ -416,8 +424,8 @@ async def check_availability(self) -> CheckResult:
         
         return CheckResult(
             plugin_name=self.name,
-            event_name=data.get('event_name', 'Event'),
-            check_time=datetime.now(),
+            item_name=data.get('item_name', 'Item'),
+            check_time=datetime.now(timezone.utc),
             availabilities=availabilities,
             success=True
         )
@@ -436,17 +444,17 @@ def _extract_availability_data(self, soup: BeautifulSoup) -> List[TicketAvailabi
     date_sections = soup.find_all('div', class_='date-section')
     for section in date_sections:
         date_str = section.find('h3').get_text(strip=True)
-        ticket_types = section.find_all('div', class_='ticket-type')
+        booking_types = section.find_all('div', class_='booking-type')
         
-        for ticket in ticket_types:
-            seat_type = ticket.find('span', class_='type').get_text(strip=True)
-            status = self._determine_status(ticket)
+        for booking in booking_types:
+            room_type = booking.find('span', class_='type').get_text(strip=True)
+            status = self._determine_status(booking)
             
-            availabilities.append(TicketAvailability(
+            availabilities.append(BookingAvailability(
                 date=date_str,
-                seat_type=seat_type,
+                room_type=room_type,
                 status=status,
-                booking_url=self._extract_booking_url(ticket) if status == 'available' else None
+                booking_url=self._extract_booking_url(booking) if status == 'available' else None
             ))
     
     return availabilities
