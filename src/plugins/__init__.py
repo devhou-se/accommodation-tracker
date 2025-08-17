@@ -1,12 +1,10 @@
 from .base import BookingPlugin, BookingAvailability, CheckResult, TicketPlugin, TicketAvailability
 from .sumo_plugin import SumoPlugin
-from .shirakawa_accommodation_plugin import ShirakawaAccommodationPlugin
 from .direct_booking_plugin import DirectBookingPlugin
 
 # Plugin registry
 AVAILABLE_PLUGINS = {
     "sumo": SumoPlugin,
-    "shirakawa_accommodation": ShirakawaAccommodationPlugin,
     "direct_booking": DirectBookingPlugin
 }
 
