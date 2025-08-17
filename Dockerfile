@@ -1,94 +1,59 @@
-# Multi-stage build for Japanese Accommodation Availability Checker
-FROM python:3.11-slim as builder
-
-# Install system dependencies for building
-RUN apt-get update && apt-get install -y \
-    gcc \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create app directory
-WORKDIR /app
-
-# Copy requirements and install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
-
-# Install Playwright and browsers
-RUN python -m pip install --user playwright
-RUN python -m playwright install chromium
-RUN python -m playwright install-deps
-
-# Runtime stage
 FROM python:3.11-slim
 
-# Install runtime system dependencies
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies required for Playwright
 RUN apt-get update && apt-get install -y \
-    # Dependencies for Playwright Chromium
+    curl \
+    ca-certificates \
+    wget \
+    gnupg \
     libnss3 \
-    libnspr4 \
     libatk-bridge2.0-0 \
     libdrm2 \
-    libxkbcommon0 \
-    libxcomposite1 \
-    libxdamage1 \
-    libxrandr2 \
-    libgbm1 \
     libxss1 \
-    libasound2 \
-    libatspi2.0-0 \
     libgtk-3-0 \
-    # Additional dependencies
-    fonts-liberation \
-    libappindicator3-1 \
+    libxrandr2 \
     libasound2 \
+    libpangocairo-1.0-0 \
     libatk1.0-0 \
     libcairo-gobject2 \
     libgtk-3-0 \
-    libgdk-pixbuf2.0-0 \
-    # Web interface dependencies
-    curl \
+    libgdk-pixbuf-2.0-0 \
+    libgbm1 \
+    fonts-unifont \
     && rm -rf /var/lib/apt/lists/*
 
-# Create non-root user
-RUN groupadd --gid 1000 appuser && \
-    useradd --uid 1000 --gid appuser --shell /bin/bash --create-home appuser
+# Copy requirements first for better caching
+COPY requirements.txt .
 
-# Copy Python packages from builder stage
-COPY --from=builder /root/.local /home/appuser/.local
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Set up application directory
-WORKDIR /app
-
-# Create data directory for status tracking
-RUN mkdir -p /app/data
+# Install Playwright browsers
+RUN playwright install chromium
 
 # Copy application code
 COPY src/ ./src/
-COPY config.example.json ./
+#COPY config.example.json ./
 
-# Copy Playwright browsers from builder
-COPY --from=builder /root/.cache/ms-playwright /home/appuser/.cache/ms-playwright
+# Create templates directory and copy templates
+RUN mkdir -p src/templates
+COPY src/templates/ ./src/templates/
 
-# Set ownership
-RUN chown -R appuser:appuser /app /home/appuser
-RUN chmod 755 /app/data
-
-# Switch to non-root user
-USER appuser
-
-# Add local bin to PATH
-ENV PATH=/home/appuser/.local/bin:$PATH
+# Create data directory for logs/state
+RUN mkdir -p /app/data
 
 # Set Python path
-ENV PYTHONPATH=/app/src
+ENV PYTHONPATH=/app
 
-# Expose ports
-EXPOSE 8000 8080
+# Expose port
+EXPOSE 8080
 
 # Health check
-HEALTHCHECK --interval=60s --timeout=10s --start-period=30s --retries=3 \
-    CMD python -c "import asyncio; import sys; sys.path.insert(0, '/app/src'); from main import AccommodationChecker; from config import load_config; asyncio.run(AccommodationChecker(load_config('/app/config.json')).health_check())" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
-# Default command
-CMD ["python", "src/main.py"]
+# Run the application
+CMD ["python", "-m", "src.main"]

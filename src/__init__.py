@@ -1,1 +1,1 @@
-# Japanese Accommodation Availability Checker
+# Ticket Availability Tracker
