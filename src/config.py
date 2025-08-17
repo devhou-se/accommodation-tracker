@@ -1,5 +1,6 @@
 import json
 import yaml
+import os
 from typing import Dict, List
 from pathlib import Path
 from dataclasses import dataclass
@@ -55,13 +56,21 @@ class ConfigManager:
     
     def _parse_config(self, data: Dict) -> AppConfig:
         """Parse configuration data into structured format"""
-        # Email configuration
+        # Email configuration - with environment variable override
         email_data = data.get('email', {})
+        
+        # Load API key from environment variable, fallback to config
+        api_key = os.getenv('MAILGUN_API_KEY', email_data.get('api_key', ''))
+        
+        # Load recipients from environment variable (comma-separated), fallback to config
+        recipients_env = os.getenv('EMAIL_RECIPIENTS', '')
+        recipients = [r.strip() for r in recipients_env.split(',') if r.strip()] if recipients_env else email_data.get('recipients', [])
+        
         email_config = EmailConfig(
-            api_key=email_data.get('api_key', ''),
+            api_key=api_key,
             domain=email_data.get('domain', ''),
             from_email=email_data.get('from_email', 'noreply@' + email_data.get('domain', 'localhost')),
-            recipients=email_data.get('recipients', [])
+            recipients=recipients
         )
         
         # Plugin configurations

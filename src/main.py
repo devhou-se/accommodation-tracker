@@ -32,6 +32,7 @@ async def main():
         config_manager = ConfigManager(config_path)
         config = config_manager.get_config()
         logger.info(f"Loaded configuration from {config_path}")
+        logger.info(f"Email recipients configured: {config.email.recipients}")
     except Exception as e:
         logger.error(f"Failed to load configuration: {e}")
         sys.exit(1)
