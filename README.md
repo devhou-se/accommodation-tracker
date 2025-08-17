@@ -1,20 +1,22 @@
-# Slop Bot 🏠🤖
+# Accommodation Tracker 🏠🤖
 
-An automated booking availability monitor that tracks accommodation availability for Japanese traditional guesthouses (Shirakawa-go) and sends email notifications when rooms become available.
+An automated booking availability monitor that tracks accommodation availability and event tickets (Japanese traditional guesthouses, Sumo tournaments) and sends email notifications when availability is found.
 
 ## Features
 
-- **Plugin Architecture**: Easily add support for different booking websites
+- **Plugin Architecture**: Easily add support for different booking websites and event systems
+- **Multi-Type Monitoring**: Supports both accommodation booking and event ticket tracking
 - **Direct Booking Integration**: Targets specific booking URLs using Playwright automation
 - **Email Notifications**: Mailgun integration for email alerts  
 - **Web Dashboard**: Real-time status monitoring and manual checks
 - **Configurable Scheduling**: Set custom check intervals per plugin
 - **Docker Support**: Fully containerized service with Playwright browser support
 
-## Supported Booking Systems
+## Supported Systems
 
 - **489pro.com**: Japanese accommodation booking system (Shirakawa-go traditional houses)
 - **Direct Booking Plugin**: Generic plugin for direct booking page monitoring
+- **Sumo Plugin**: Japanese Sumo tournament ticket availability monitoring
 
 ## Quick Start
 
@@ -61,13 +63,24 @@ Edit `config.json` to configure the service:
       "type": "direct_booking",
       "name": "shirakawa_accommodations",
       "enabled": true,
-      "check_interval_minutes": 120,
+      "check_interval_minutes": 60,
       "config": {
         "booking_urls": [
           "https://www6.489pro.com/asp/489/menu.asp?id=21560019&lan=ENG&kid=00156",
           "https://www6.489pro.com/asp/489/menu.asp?id=21560023&lan=ENG&kid=00156"
         ],
-        "target_dates": ["2025-10-10", "2025-10-11"]
+        "target_dates": ["2025-11-04"]
+      }
+    },
+    {
+      "type": "sumo",
+      "name": "sumo_november_2025",
+      "enabled": true,
+      "check_interval_minutes": 60,
+      "config": {
+        "url": "https://sumo.pia.jp/en/",
+        "tournament_month": "11",
+        "year": "2025"
       }
     }
   ],
@@ -78,10 +91,10 @@ Edit `config.json` to configure the service:
 
 ### Email Configuration
 
-1. **Sign up for Mailgun** at https://mailgun.com
-2. **Add your domain** and verify it
-3. **Get your API key** from the Mailgun dashboard
-4. **Update config.json** with your credentials
+Email configuration is simplified - only domain and from_email are required:
+
+- **domain**: Your email domain (e.g., "mail.example.com")
+- **from_email**: Sender email address (e.g., "bot@mail.example.com")
 
 ### Plugin Configuration
 
@@ -91,6 +104,14 @@ The `direct_booking` plugin monitors specific booking URLs for room availability
 
 - **booking_urls**: Array of direct booking page URLs to monitor
 - **target_dates**: Array of dates to check (YYYY-MM-DD format)
+
+#### Sumo Plugin
+
+The `sumo` plugin monitors Japanese Sumo tournament ticket availability:
+
+- **url**: Base URL for the sumo ticket site (e.g., "https://sumo.pia.jp/en/")
+- **tournament_month**: Month of the tournament ("01", "03", "05", "07", "09", "11")
+- **year**: Tournament year (e.g., "2025")
 
 ## Development
 
@@ -116,7 +137,7 @@ The `direct_booking` plugin monitors specific booking URLs for room availability
 
 1. Create a new plugin in `src/plugins/`
 2. Extend the `BookingPlugin` base class
-3. Implement `check_availability()` and `get_accommodation_info()` methods
+3. Implement `check_availability()` and `get_item_info()` methods
 4. Register in `src/plugins/__init__.py`
 
 Example plugin structure:
@@ -134,16 +155,16 @@ class MyPlugin(BookingPlugin):
         
         return CheckResult(
             plugin_name=self.name,
-            accommodation_name="My Accommodation",
+            item_name="My Item",
             check_time=datetime.now(),
             availabilities=availabilities,
             success=True
         )
 
-    def get_accommodation_info(self) -> Dict:
+    def get_item_info(self) -> Dict:
         return {
-            "name": "My Accommodation",
-            "dates": ["2025-10-10"],
+            "name": "My Item",
+            "dates": ["2025-11-04"],
             "venues": ["Location 1"]
         }
 ```
@@ -215,10 +236,7 @@ docker-compose down
 
 ### Configuration Files
 
-Sample configuration files are provided:
-- `config.example.json` - Basic template
-- `config.direct-booking-test.json` - Single accommodation test
-- `config.direct-booking-full.json` - Full monitoring setup
+Configuration is managed through `config.json`. A sample configuration is available in `deploy/config.json`.
 
 ### Logs
 
@@ -245,9 +263,9 @@ tail -f accommodation_log_*.json
 ## Example Output
 
 ```
-🏠 Slop Bot - Shirakawa-go Accommodation Monitor 🤖
+🏠 Accommodation Tracker - Multi-purpose Availability Monitor 🤖
 Plugin: direct_booking
-Check time: 2025-08-15 11:14:43
+Check time: 2025-08-17 11:14:43
 Success: True
 Booking Availability Found:
   ✅ 8 Japanese Tatami mats (Oct-Nov 2025 Package): available
@@ -256,6 +274,15 @@ Booking Availability Found:
   ✅ 12 Japanese Tatami mats (Oct-Nov 2025 Package): available  
     Price: JPY19,250
     Booking URL: https://www6.489pro.com/asp/489/menu.asp?id=21560019&lan=ENG&kid=00156
+
+Plugin: sumo
+Check time: 2025-08-17 11:15:02
+Success: True
+Ticket Availability Found:
+  ✅ 2025 November Grand Tournament: available
+    Venue: Fukuoka
+    Tickets available for purchase
+    Booking URL: https://sumo.pia.jp/en/
 ```
 
 ## License
